@@ -3,9 +3,20 @@ import express from "express"
 const router = express.Router()
 
 router.post("/register", (req, res) => {
-    console.log("POST request to /register")
 
-    res.json({ message: "POST request to /register" })
 })
+
+router.post("/login", (req, res) => {
+
+})
+
+router.post("/logout", (req, res) => {
+
+})
+
+router.get("/profile", (req, res) => {
+
+})
+
 
 export default router
