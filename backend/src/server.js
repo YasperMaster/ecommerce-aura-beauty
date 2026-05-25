@@ -9,10 +9,7 @@ const app = express()
 
 const PORT = 3001
 
-
-app.get("/ping", (req, res) => {
-  res.send("pong")
-})
+app.use(express.json())
 app.use("/api/auth", authRoutes)
 
 connectDB().then(() => {
