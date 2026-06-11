@@ -5,7 +5,13 @@ const API_URL = import.meta.env.VITE_BACKEND_URL + "/auth"
 axios.defaults.withCredentials = true
 
 export const getProfileService = async () => {
-    
+    try {
+        const response = await axios.get(`${API_URL}/profile`)
+        return response.data
+    } catch (error) {
+        console.log(error)
+        throw new Error("Error al obtener el perfil")
+    }
 }
 
 export const loginService = async () => {
@@ -14,7 +20,6 @@ export const loginService = async () => {
 
 export const registerService = async (data, reset, setRedirect, checkSession) => {
     try {
-        console.log("Calling:", `${API_URL}/register`)
         const response = await axios.post(`${API_URL}/register`, data, {
             headers: { "Content-Type": "application/json"},
             withCredentials: true,

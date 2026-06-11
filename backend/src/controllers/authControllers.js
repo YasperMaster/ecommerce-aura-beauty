@@ -46,3 +46,9 @@ export const registerUser = async (req, res) => {
         res.json(error)
     }
 }
+
+export const profile = async (req, res) => {
+    console.log("req.cookies", req.cookies)
+    const token = req.cookies.accessToken
+    console.log("Token", token)
+}
