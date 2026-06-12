@@ -33,7 +33,7 @@ const Home = () => {
     <div className="space-y-10 py-10">
       <section className="hero overflow-hidden rounded-[2rem] bg-gradient-to-r from-primary/15 via-secondary/15 to-accent/10 px-6 py-10 lg:px-10">
         <div className="hero-content flex-col gap-8 lg:flex-row-reverse">
-          <div className="h-[360px] w-full max-w-[300px] overflow-hidden rounded-3xl bg-white shadow-2xl lg:h-[460px] lg:max-w-[360px]">
+          <div className="h-[300px] w-[300px] shrink-0 overflow-hidden rounded-full bg-white shadow-2xl lg:h-[360px] lg:w-[360px]">
             <img
               alt="Aura Beauty logo"
               className="h-full w-full object-cover object-center"
