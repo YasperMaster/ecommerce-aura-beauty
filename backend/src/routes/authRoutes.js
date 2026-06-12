@@ -1,19 +1,18 @@
-import express from "express"
-import { registerUser, profile } from "../controllers/authControllers.js"
+import express from "express";
+import {
+  loginUser,
+  logoutUser,
+  profile,
+  registerUser,
+} from "../controllers/authControllers.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
+import { authLimiter } from "../middleware/rateLimiters.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/register", registerUser)
+router.post("/register", authLimiter, registerUser);
+router.post("/login", authLimiter, loginUser);
+router.post("/logout", logoutUser);
+router.get("/profile", requireAuth, profile);
 
-router.post("/login", (req, res) => {
-
-})
-
-router.post("/logout", (req, res) => {
-
-})
-
-router.get("/profile", profile)
-
-
-export default router
+export default router;

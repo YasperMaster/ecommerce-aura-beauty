@@ -1,41 +1,39 @@
-import axios from "axios"
-
-const API_URL = import.meta.env.VITE_BACKEND_URL + "/auth"
-
-axios.defaults.withCredentials = true
+import { authApi, getApiErrorMessage } from "./api";
 
 export const getProfileService = async () => {
-    try {
-        const response = await axios.get(`${API_URL}/profile`)
-        return response.data
-    } catch (error) {
-        console.log(error)
-        throw new Error("Error al obtener el perfil")
-    }
-}
+  try {
+    const response = await authApi.get("/auth/profile");
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo obtener la sesión actual."),
+    );
+  }
+};
 
-export const loginService = async () => {
+export const loginService = async (credentials) => {
+  try {
+    const response = await authApi.post("/auth/login", credentials);
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "No se pudo iniciar sesión."));
+  }
+};
 
-}
-
-export const registerService = async (data, reset, setRedirect, checkSession) => {
-    try {
-        const response = await axios.post(`${API_URL}/register`, data, {
-            headers: { "Content-Type": "application/json"},
-            withCredentials: true,
-        })
-
-        console.log("RESPUESTA", response)
-        if (response.status === 201 || response.status === 200) {
-            alert("Usuario registrado exitosamente")
-            reset()
-        }
-    } catch (error) {
-        alert("Error al registrar el usuario")
-        console.log(error)
-    }   
-}
+export const registerService = async (data) => {
+  try {
+    const response = await authApi.post("/auth/register", data);
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "No se pudo crear la cuenta."));
+  }
+};
 
 export const logoutService = async () => {
-    
-}
+  try {
+    const response = await authApi.post("/auth/logout");
+    return response.data;
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, "No se pudo cerrar sesión."));
+  }
+};

@@ -1,23 +1,38 @@
-import { Routes, Route } from "react-router"
-import Navbar from "./components/Navbar/Navbar"
-import Layout from "./layout/Layout"
-import Home from "./pages/Home"
-import Register from "./pages/Register"
-import Login from "./pages/Login"
-import { UserContextProvider } from "./context/UserContext"
+import { Route, Routes } from "react-router";
+import AdminRoute from "./components/common/AdminRoute";
+import { CartContextProvider } from "./context/CartContext";
+import { UserContextProvider } from "./context/UserContext";
+import Layout from "./layout/Layout";
+import Cart from "./pages/Cart";
+import CheckoutFailure from "./pages/CheckoutFailure";
+import CheckoutPending from "./pages/CheckoutPending";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/admin/Dashboard";
 
 function App() {
   return (
     <UserContextProvider>
-      <Routes>
-        <Route element={<Layout/>}>
-          <Route path="/" element={<Home/>}></Route>
-          <Route path="/register" element={<Register/>}></Route>
-          <Route path="/login" element={<Login/>}></Route>
-        </Route>
-      </Routes>
+      <CartContextProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route element={<Home />} path="/" />
+            <Route element={<Register />} path="/register" />
+            <Route element={<Login />} path="/login" />
+            <Route element={<Cart />} path="/cart" />
+            <Route element={<CheckoutSuccess />} path="/checkout/success" />
+            <Route element={<CheckoutPending />} path="/checkout/pending" />
+            <Route element={<CheckoutFailure />} path="/checkout/failure" />
+            <Route element={<AdminRoute />}>
+              <Route element={<Dashboard />} path="/admin" />
+            </Route>
+          </Route>
+        </Routes>
+      </CartContextProvider>
     </UserContextProvider>
-  )
+  );
 }
 
-export default App
+export default App;

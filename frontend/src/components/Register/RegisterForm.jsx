@@ -1,106 +1,175 @@
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { FaEye, FaEyeSlash } from "react-icons/fa"
-import { registerService } from "../../services/authServices"
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Link, useLocation, useNavigate } from "react-router";
+import { useUser } from "../../context/UserContext";
+
+const getInputStateClassName = (value, hasError) => {
+  if (hasError) {
+    return "border-red-500 outline-red-500 focus:outline-red-500";
+  }
+
+  if (value) {
+    return "border-success outline-success focus:outline-success";
+  }
+
+  return "";
+};
 
 const RegisterForm = () => {
-    const { register, handleSubmit, formState: { errors }, reset, } = useForm ({
-        mode: "onChange"
-    })
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { register: registerUser } = useUser();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    mode: "onChange",
+  });
 
-    const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const usernameValue = watch("username", "");
+  const emailValue = watch("email", "");
+  const passwordValue = watch("password", "");
+  const redirectTo = useMemo(
+    () => location.state?.redirectTo || "/",
+    [location.state],
+  );
 
-    const onSubmit = async (data) => {
-        registerService(data, reset)
+  const onSubmit = async (data) => {
+    try {
+      const response = await registerUser(data);
+      toast.success(response.message);
+      reset();
+      navigate(redirectTo);
+    } catch (error) {
+      toast.error(error.message);
     }
+  };
 
-    return (
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto">
-            <div>
-                <input {...register("username", {
-                    required: "Ingresá un nombre de usuario",
-                    minLength: {
-                        value: 3,
-                        message: "Tu nombre de usuario debe tener al menos 3 caracteres."
-                    },
-                    maxLength: {
-                        value: 20,
-                        message: "Tu nombre de usuario debe tener a lo sumo 20 caracteres."
-                    }
-                })} className={`p-2 outline-2 rounded border focus:outline-primary w-full ${
-                    errors.username
-                    ? "border-red-500 outline-red-500 focus:outline-red-500"
-                    : ""
-                }`} autoComplete="usernames" name="username" placeholder="Nombre de usuario" type="text" />
-                {errors.username && (
-                    <p className="text-red-500 text-sm mt-2 ml-1">{errors.username.message}</p>
-                )}
-            </div>
-            <div>
-                <input {...register("email", {
-                    required: "Ingresá un correo electrónico.",
-                    pattern: {
-                        value: /^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/,
-                        message: "Correo electrónico no valido."
-                    },
-                    maxLength: {
-                        value: 254,
-                        message: "Tu correo es demasiado largo, debe tener a lo sumo 254 caracteres."
-                    },
-                })} className={`p-2 outline-2 rounded border focus:outline-primary w-full ${
-                    errors.email
-                    ? "border-red-500 outline-red-500 focus:outline-red-500"
-                    : ""
-                }`} autoComplete="email" name="email" placeholder="Correo electrónico" type="email" />
-                {errors.email && (
-                    <p className="text-red-500 text-sm mt-2 ml-1">{errors.email.message}</p>
-                )}
-            </div>
-            <div className="relative">
-                <input {...register("password", {
-                    required: "Ingresá una contraseña.",
-                    minLength: {
-                        value: 6,
-                        message: "La contraseña debe tener al menos 6 caracteres."
-                    },
-                    maxLength: {
-                        value: 30,
-                        message: "La contraseña debe tener a lo sumo 30 caracteres."
-                    },
-                    validate: {
-                        numbersMin: (value) => {
-                            const Num = (value.match(/\d/g) || []).length;
-                            return (
-                                Num >= 3 || "La contraseña debe tener al menos 3 números"
-                            );
-                        },
-                    },
-                })} className={`p-2 outline-2 rounded border focus:outline-primary w-full ${
-                    errors.password
-                    ? "border-red-500 outline-red-500 focus:outline-red-500"
-                    : ""
-                }`} autoComplete="current-password" placeholder="Contraseña" type={showPassword ? "text" : "password"} />
-                <button 
-                    onClick={() => setShowPassword(prev => !prev)} 
-                    aria-label={ showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} 
-                    type="button" 
-                    className="cursor-pointer absolute right-4 top-[20px] transform -translate-y-1/2 text-gray-600">
-                    {showPassword ? (<FaEyeSlash size={23}/>) : (<FaEye size={23}/>)}
-                </button>
-                {errors.password && (
-                    <p className="text-red-500 text-sm mt-2 ml-1">{errors.password.message}</p>
-                )}
-                <div className="mt-2 text-sm text-gray-500">
-                    <p className="font-medium mb-1">La contraseña debe contener:</p>
-                    <ul className="list-disc pl-5 space-y-1">
-                        <li>Entre 6 y 30 caracteres de longitud</li>
-                        <li>Al menos 3 números</li>
-                    </ul>
-                </div>
-                <button className="mt-6 btn btn-primary" type="submit">Registrarse</button>
-            </div>
-        </form>
-    )
-}
+  return (
+    <form
+      className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+      onSubmit={handleSubmit(onSubmit)}
+    >
+      <div>
+        <input
+          {...register("username", {
+            required: "Ingresá un nombre de usuario.",
+            minLength: {
+              value: 3,
+              message: "Tu nombre de usuario debe tener al menos 3 caracteres.",
+            },
+            maxLength: {
+              value: 20,
+              message:
+                "Tu nombre de usuario debe tener a lo sumo 20 caracteres.",
+            },
+          })}
+          autoComplete="username"
+          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+            usernameValue && !errors.username,
+            Boolean(errors.username),
+          )}`}
+          placeholder="Nombre de usuario"
+          type="text"
+        />
+        {errors.username && (
+          <p className="text-red-500 text-sm mt-2 ml-1">
+            {errors.username.message}
+          </p>
+        )}
+      </div>
 
-export default RegisterForm
+      <div>
+        <input
+          {...register("email", {
+            required: "Ingresá un correo electrónico.",
+            pattern: {
+              value: /^\S+@\S+\.\S+$/,
+              message: "Ingresá un correo electrónico válido.",
+            },
+            maxLength: {
+              value: 254,
+              message: "Tu correo debe tener a lo sumo 254 caracteres.",
+            },
+          })}
+          autoComplete="email"
+          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+            emailValue && !errors.email,
+            Boolean(errors.email),
+          )}`}
+          placeholder="Correo electrónico"
+          type="email"
+        />
+        {errors.email && (
+          <p className="text-red-500 text-sm mt-2 ml-1">
+            {errors.email.message}
+          </p>
+        )}
+      </div>
+
+      <div className="relative">
+        <input
+          {...register("password", {
+            required: "Ingresá una contraseña.",
+            minLength: {
+              value: 6,
+              message: "La contraseña debe tener al menos 6 caracteres.",
+            },
+            maxLength: {
+              value: 30,
+              message: "La contraseña debe tener a lo sumo 30 caracteres.",
+            },
+          })}
+          autoComplete="new-password"
+          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+            passwordValue && !errors.password,
+            Boolean(errors.password),
+          )}`}
+          placeholder="Contraseña"
+          type={showPassword ? "text" : "password"}
+        />
+        <button
+          aria-label={
+            showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+          }
+          className="cursor-pointer absolute right-4 top-[20px] transform -translate-y-1/2 text-gray-600"
+          onClick={() => setShowPassword((prev) => !prev)}
+          type="button"
+        >
+          {showPassword ? <FaEyeSlash size={23} /> : <FaEye size={23} />}
+        </button>
+        {errors.password && (
+          <p className="text-red-500 text-sm mt-2 ml-1">
+            {errors.password.message}
+          </p>
+        )}
+        <p className="mt-2 text-sm text-base-content/60">
+          La contraseña debe tener entre 6 y 30 caracteres.
+        </p>
+      </div>
+
+      <button
+        className="btn btn-primary mt-2"
+        disabled={isSubmitting}
+        type="submit"
+      >
+        {isSubmitting ? "Creando cuenta..." : "Registrarse"}
+      </button>
+
+      <p className="text-center text-sm text-base-content/70">
+        ¿Ya tenés una cuenta?{" "}
+        <Link className="link link-primary" to="/login">
+          Iniciá sesión
+        </Link>
+      </p>
+    </form>
+  );
+};
+
+export default RegisterForm;

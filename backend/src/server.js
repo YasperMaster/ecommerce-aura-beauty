@@ -1,34 +1,74 @@
-import express from "express"
-import { connectDB, disconnectDB } from "./config/conifgdb.js"
-import dotenv from "dotenv"
-import authRoutes from "./routes/authRoutes.js"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { connectDB, disconnectDB } from "./config/conifgdb.js";
+import { seedProducts } from "./config/seedProducts.js";
+import authRoutes from "./routes/authRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js";
 
-dotenv.config()
+dotenv.config({
+  path: new URL("../.env", import.meta.url),
+});
 
-const app = express()
+const app = express();
+const PORT = Number(process.env.PORT) || 3001;
+const allowedOrigins = Array.from(
+  new Set([
+    ...(process.env.FRONTEND_URL || "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ]),
+);
 
-const PORT = 3001
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "Set-Cookie"],
-    credentials: true,
-}))
+    return callback(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
 
-app.use(cookieParser())
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+app.use(cookieParser());
+app.use(express.json({ limit: "1mb" }));
 
-app.use(express.json())
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 
-app.use("/api/auth", authRoutes)
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/checkout", checkoutRoutes);
 
-connectDB().then(() => {
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  res.status(500).json({ message: "Internal server error" });
+});
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    await seedProducts();
+
     app.listen(PORT, () => {
-    console.log(`Server running on port: ${PORT}`)
-    })
-})
-.catch(() => {
-    disconnectDB()
-})
+      console.log(`Server running on port: ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    await disconnectDB();
+    process.exit(1);
+  }
+};
+
+startServer();

@@ -1,51 +1,74 @@
-import { useContext, createContext, useState, useEffect } from "react";
-import { getProfileService } from "../services/authServices";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  getProfileService,
+  loginService,
+  logoutService,
+  registerService,
+} from "../services/authServices";
 
-export const UserContext = createContext({});
+export const UserContext = createContext(null);
 
 export const UserContextProvider = ({ children }) => {
-  const [userInfo, setUserInfo] = useState({});
+  const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const checkSession = async () => {
+  const checkSession = useCallback(async () => {
     try {
       setLoading(true);
       const userData = await getProfileService();
       setUserInfo(userData);
-    } catch (error) {
-      console.log("No hay sesión activa:", error);
-      setUserInfo({});
+      return userData;
+    } catch {
+      setUserInfo(null);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getUserId = () => {
-    return userInfo?.id || null;
-  };
+  const login = useCallback(async (credentials) => {
+    const response = await loginService(credentials);
+    setUserInfo(response.user);
+    return response;
+  }, []);
 
-  const isAuthenticated = () => {
-    return !!userInfo?.id;
-  };
+  const register = useCallback(async (data) => {
+    const response = await registerService(data);
+    setUserInfo(response.user);
+    return response;
+  }, []);
+
+  const logout = useCallback(async () => {
+    const response = await logoutService();
+    setUserInfo(null);
+    return response;
+  }, []);
 
   useEffect(() => {
     checkSession();
-  }, []);
+  }, [checkSession]);
 
-  return (
-    <UserContext.Provider
-      value={{
-        userInfo,
-        setUserInfo,
-        loading,
-        checkSession,
-        getUserId,
-        isAuthenticated,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
+  const value = useMemo(
+    () => ({
+      userInfo,
+      loading,
+      checkSession,
+      login,
+      register,
+      logout,
+      isAuthenticated: Boolean(userInfo?.id),
+    }),
+    [userInfo, loading, checkSession, login, register, logout],
   );
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
 export const useUser = () => useContext(UserContext);

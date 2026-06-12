@@ -1,3 +1,34 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply min-h-screen bg-base-200 text-base-content;
+        background-image: radial-gradient(
+            circle at top,
+            rgba(255, 183, 197, 0.25),
+            transparent 30%
+        );
+    }
+
+    #root {
+        @apply min-h-screen;
+    }
+}
+
+@layer components {
+    .input-no-spinner {
+        appearance: textfield;
+    }
+
+    .input-no-spinner::-webkit-outer-spin-button,
+    .input-no-spinner::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}
