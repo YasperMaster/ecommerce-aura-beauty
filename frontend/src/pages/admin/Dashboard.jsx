@@ -178,7 +178,7 @@ const Dashboard = () => {
               <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
                 Admin
               </p>
-              <h1 className="text-3xl font-bold">Dashboard de productos</h1>
+              <h1 className="text-3xl font-bold">Alta de productos</h1>
             </div>
             {editingProductId && (
               <button
@@ -206,7 +206,7 @@ const Dashboard = () => {
                 })}
                 className="input input-bordered w-full"
                 id="title"
-                placeholder="Hydra Glow Serum"
+                placeholder="Título del producto"
                 type="text"
               />
               {errors.title && (
@@ -242,22 +242,8 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div>
                 <label className="label" htmlFor="image">
-                  <span className="label-text">Imagen (URL o subida)</span>
+                  <span className="label-text">Imagen</span>
                 </label>
-                <input
-                  {...register("image", {
-                    required: "Ingresá una imagen o subí un archivo.",
-                  })}
-                  className="input input-bordered w-full"
-                  id="image"
-                  placeholder="https://..."
-                  type="text"
-                />
-                {errors.image && (
-                  <p className="mt-2 text-sm text-error">
-                    {errors.image.message}
-                  </p>
-                )}
               </div>
               <div>
                 <input

@@ -79,6 +79,12 @@ const Cart = () => {
             onRemove={() => removeItem(item.id)}
           />
         ))}
+        <Link
+          className="inline-flex items-center gap-2 text-sm text-primary underline-offset-4 hover:underline"
+          to="/"
+        >
+          ← Añadí más productos
+        </Link>
       </div>
 
       <aside className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm lg:sticky lg:top-6 lg:h-fit">

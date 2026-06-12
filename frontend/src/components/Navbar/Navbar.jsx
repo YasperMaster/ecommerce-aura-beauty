@@ -94,7 +94,7 @@ const Navbar = () => {
             </li>
             {userInfo?.isAdmin && (
               <li>
-                <Link to="/admin">Dashboard</Link>
+                <Link to="/admin">Panel de administración</Link>
               </li>
             )}
           </ul>
