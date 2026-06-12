@@ -19,11 +19,11 @@ const Footer = () => {
           </a>
           <a
             className="inline-flex items-center gap-2 transition hover:text-primary"
-            href="https://wa.me/5491123456789"
+            href="https://wa.me/543464594165"
             rel="noreferrer"
             target="_blank"
           >
-            <FaWhatsapp /> +54 9 11 2345-6789
+            <FaWhatsapp /> 3464 594165
           </a>
         </div>
       </div>

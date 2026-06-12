@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaInstagram } from "react-icons/fa";
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { Link } from "react-router";
 import { useUser } from "../../context/UserContext";
 import AuthButtons from "./AuthButtons";
@@ -108,6 +108,15 @@ const Navbar = () => {
             target="_blank"
           >
             <FaInstagram size={22} />
+          </a>
+          <a
+            aria-label="WhatsApp Aura Beauty"
+            className="btn btn-ghost btn-circle text-xl"
+            href="https://wa.me/543464594165"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <FaWhatsapp size={22} />
           </a>
           <Cart />
         </div>
