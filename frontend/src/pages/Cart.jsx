@@ -101,7 +101,7 @@ const Cart = () => {
 
         {!isAuthenticated && (
           <div className="mb-4 rounded-box border border-warning/40 bg-warning/10 p-4 text-sm text-warning-content">
-            Para continuar con Mercado Pago tenés que iniciar sesión.
+            Para realizar una compra tenés que iniciar sesión.
           </div>
         )}
 
@@ -111,7 +111,7 @@ const Cart = () => {
           onClick={handleCheckout}
           type="button"
         >
-          {isSubmitting ? "Redirigiendo..." : "Pagar con Mercado Pago"}
+          {isSubmitting ? "Redirigiendo..." : "Pagar"}
         </button>
         <button
           className="btn btn-ghost mt-3 w-full"

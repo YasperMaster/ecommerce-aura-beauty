@@ -6,7 +6,8 @@ import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
 //   TEST-*     → sandbox / test credentials
 //   APP_USR-*  → production credentials
 // ---------------------------------------------------------------------------
-export const isTestToken = (token = "") => token.startsWith("TEST-");
+export const isTestToken = (token = "") =>
+  token.startsWith("TEST-") || process.env.MERCADO_PAGO_TEST_MODE === "true";
 
 export const getAccessToken = () => {
   const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;

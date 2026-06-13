@@ -286,11 +286,9 @@ export const createMercadoPagoPreference = async (req, res) => {
       : preferenceResponse.init_point || preferenceResponse.sandbox_init_point;
 
     if (!checkoutUrl || !preferenceResponse.id) {
-      return res
-        .status(502)
-        .json({
-          message: "Mercado Pago no devolvió una URL de checkout válida.",
-        });
+      return res.status(502).json({
+        message: "Mercado Pago no devolvió una URL de checkout válida.",
+      });
     }
 
     order.mercadoPago.preferenceId = preferenceResponse.id;
