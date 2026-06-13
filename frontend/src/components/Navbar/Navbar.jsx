@@ -94,15 +94,15 @@ const Navbar = () => {
             </li>
             {userInfo?.isAdmin && (
               <li>
-                <Link to="/admin">Panel de administración</Link>
+                <Link to="/admin">Dashboard</Link>
               </li>
             )}
           </ul>
         </div>
-        <div className="navbar-end gap-3">
+        <div className="navbar-end gap-1">
           <a
             aria-label="Instagram Aura Beauty"
-            className="btn btn-ghost btn-circle text-xl"
+            className="btn btn-ghost btn-circle"
             href="https://instagram.com/aura_beauty2625"
             rel="noreferrer"
             target="_blank"
@@ -111,7 +111,7 @@ const Navbar = () => {
           </a>
           <a
             aria-label="WhatsApp Aura Beauty"
-            className="btn btn-ghost btn-circle text-xl"
+            className="btn btn-ghost btn-circle"
             href="https://wa.me/543464594165"
             rel="noreferrer"
             target="_blank"

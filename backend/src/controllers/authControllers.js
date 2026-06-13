@@ -20,6 +20,13 @@ const handleAuthError = (res, error) => {
     });
   }
 
+  // Duplicate key — email already registered (race condition or concurrent request)
+  if (error?.code === 11000) {
+    return res.status(409).json({
+      message: "Ese correo electrónico ya está registrado.",
+    });
+  }
+
   console.error(error);
   return res.status(500).json({ message: "Ocurrió un error inesperado." });
 };

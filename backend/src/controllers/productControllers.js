@@ -1,20 +1,22 @@
+import mongoose from "mongoose";
 import { ZodError } from "zod";
 import ProductModel from "../models/ProductModel.js";
 import { productSchema } from "../schemas/productSchema.js";
 
 const PUBLIC_PRODUCT_FIELDS =
-  "_id slug title description image price stock isActive";
+  "_id slug title description category image price stock isActive";
 const ADMIN_PRODUCT_FIELDS = `${PUBLIC_PRODUCT_FIELDS} createdAt updatedAt`;
 
-const slugify = (value) => {
-  return value
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+const slugify = (value) =>
+  value
     .toLowerCase()
     .trim()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-};
 
 const buildUniqueSlug = async (title, excludeProductId = null) => {
   const baseSlug = slugify(title) || `product-${Date.now()}`;
@@ -22,30 +24,28 @@ const buildUniqueSlug = async (title, excludeProductId = null) => {
   let suffix = 1;
 
   while (true) {
-    const existingProduct = await ProductModel.findOne({
+    const existing = await ProductModel.findOne({
       slug: candidate,
       ...(excludeProductId ? { _id: { $ne: excludeProductId } } : {}),
     }).select("_id");
 
-    if (!existingProduct) {
-      return candidate;
-    }
+    if (!existing) return candidate;
 
     suffix += 1;
     candidate = `${baseSlug}-${suffix}`;
   }
 };
 
-const parseProductPayload = (body) => {
-  return productSchema.parse({
+const parseProductPayload = (body) =>
+  productSchema.parse({
     title: body?.title,
     description: body?.description,
+    category: body?.category,
     image: body?.image,
     price: body?.price,
     stock: body?.stock,
     isActive: body?.isActive,
   });
-};
 
 const handleProductError = (res, error) => {
   if (error instanceof ZodError) {
@@ -60,32 +60,48 @@ const handleProductError = (res, error) => {
 };
 
 export const getProducts = async (_req, res) => {
-  const products = await ProductModel.find({ isActive: true })
-    .select(PUBLIC_PRODUCT_FIELDS)
-    .sort({ createdAt: -1 });
+  try {
+    const products = await ProductModel.find({ isActive: true })
+      .select(PUBLIC_PRODUCT_FIELDS)
+      .sort({ createdAt: -1 });
 
-  return res.status(200).json(products);
+    return res.status(200).json(products);
+  } catch (error) {
+    return handleProductError(res, error);
+  }
 };
 
 export const getAdminProducts = async (_req, res) => {
-  const products = await ProductModel.find({})
-    .select(ADMIN_PRODUCT_FIELDS)
-    .sort({ createdAt: -1 });
+  try {
+    const products = await ProductModel.find({})
+      .select(ADMIN_PRODUCT_FIELDS)
+      .sort({ createdAt: -1 });
 
-  return res.status(200).json(products);
+    return res.status(200).json(products);
+  } catch (error) {
+    return handleProductError(res, error);
+  }
 };
 
 export const getProductById = async (req, res) => {
-  const product = await ProductModel.findOne({
-    _id: req.params.productId,
-    isActive: true,
-  }).select(PUBLIC_PRODUCT_FIELDS);
+  try {
+    if (!isValidId(req.params.productId)) {
+      return res.status(400).json({ message: "ID de producto no válido." });
+    }
 
-  if (!product) {
-    return res.status(404).json({ message: "Producto no encontrado." });
+    const product = await ProductModel.findOne({
+      _id: req.params.productId,
+      isActive: true,
+    }).select(PUBLIC_PRODUCT_FIELDS);
+
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado." });
+    }
+
+    return res.status(200).json(product);
+  } catch (error) {
+    return handleProductError(res, error);
   }
-
-  return res.status(200).json(product);
 };
 
 export const createProduct = async (req, res) => {
@@ -93,10 +109,7 @@ export const createProduct = async (req, res) => {
     const parsedData = parseProductPayload(req.body);
     const slug = await buildUniqueSlug(parsedData.title);
 
-    const product = await ProductModel.create({
-      ...parsedData,
-      slug,
-    });
+    const product = await ProductModel.create({ ...parsedData, slug });
 
     return res.status(201).json({
       message: "Producto creado correctamente.",
@@ -109,6 +122,10 @@ export const createProduct = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
   try {
+    if (!isValidId(req.params.productId)) {
+      return res.status(400).json({ message: "ID de producto no válido." });
+    }
+
     const existingProduct = await ProductModel.findById(req.params.productId);
 
     if (!existingProduct) {
@@ -123,6 +140,7 @@ export const updateProduct = async (req, res) => {
 
     existingProduct.title = parsedData.title;
     existingProduct.description = parsedData.description;
+    existingProduct.category = parsedData.category;
     existingProduct.image = parsedData.image;
     existingProduct.price = parsedData.price;
     existingProduct.stock = parsedData.stock;
@@ -141,13 +159,23 @@ export const updateProduct = async (req, res) => {
 };
 
 export const deleteProduct = async (req, res) => {
-  const product = await ProductModel.findById(req.params.productId);
+  try {
+    if (!isValidId(req.params.productId)) {
+      return res.status(400).json({ message: "ID de producto no válido." });
+    }
 
-  if (!product) {
-    return res.status(404).json({ message: "Producto no encontrado." });
+    const product = await ProductModel.findById(req.params.productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Producto no encontrado." });
+    }
+
+    await product.deleteOne();
+
+    return res
+      .status(200)
+      .json({ message: "Producto eliminado correctamente." });
+  } catch (error) {
+    return handleProductError(res, error);
   }
-
-  await product.deleteOne();
-
-  return res.status(200).json({ message: "Producto eliminado correctamente." });
 };

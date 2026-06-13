@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router";
 import { useCart } from "../../context/CartContext";
 import { useUser } from "../../context/UserContext";
 import { formatCurrency } from "../../utils/formatters";
@@ -15,11 +15,7 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       toast.error("Iniciá sesión para agregar productos al carrito.");
-      navigate("/login", {
-        state: {
-          redirectTo: "/",
-        },
-      });
+      navigate("/login", { state: { redirectTo: "/" } });
       return;
     }
 
@@ -29,7 +25,7 @@ const ProductCard = ({ product }) => {
     }
 
     addItem(product);
-    navigate("/cart");
+    toast.success(`${product.title} agregado al carrito.`);
   };
 
   return (

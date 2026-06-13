@@ -10,5 +10,9 @@ export const loadCart = () => {
 };
 
 export const saveCart = (items) => {
-  window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  try {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // localStorage full or unavailable (private browsing quota) — fail silently
+  }
 };

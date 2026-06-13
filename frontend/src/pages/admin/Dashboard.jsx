@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import PageLoader from "../../components/common/PageLoader";
+import { getAdminOrdersService } from "../../services/checkoutServices";
 import {
   createProductService,
   deleteProductService,
   getAdminProductsService,
   updateProductService,
 } from "../../services/productServices";
-import { getAdminOrdersService } from "../../services/checkoutServices";
 import { formatCurrency } from "../../utils/formatters";
 
 const emptyValues = {
@@ -31,7 +31,8 @@ const fileToDataUrl = (file) =>
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
   const {
@@ -41,39 +42,50 @@ const Dashboard = () => {
     setValue,
     watch,
     formState: { errors },
-  } = useForm({
-    defaultValues: emptyValues,
-  });
+  } = useForm({ defaultValues: emptyValues });
 
   const currentImage = watch("image");
 
-  const loadDashboardData = useCallback(async () => {
+  const loadProducts = useCallback(async () => {
     try {
-      setLoading(true);
-      const [adminProducts, adminOrders] = await Promise.all([
-        getAdminProductsService(),
-        getAdminOrdersService(),
-      ]);
+      setProductsLoading(true);
+      const adminProducts = await getAdminProductsService();
       setProducts(adminProducts);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setProductsLoading(false);
+    }
+  }, []);
+
+  const loadOrders = useCallback(async () => {
+    try {
+      setOrdersLoading(true);
+      const adminOrders = await getAdminOrdersService();
       setOrders(adminOrders);
     } catch (error) {
       toast.error(error.message);
     } finally {
-      setLoading(false);
+      setOrdersLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    loadProducts();
+    loadOrders();
+  }, [loadProducts, loadOrders]);
 
   const sortedProducts = useMemo(
-    () => [...products].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    () =>
+      [...products].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      ),
     [products],
   );
 
   const sortedOrders = useMemo(
-    () => [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    () =>
+      [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
     [orders],
   );
 
@@ -97,10 +109,7 @@ const Dashboard = () => {
 
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (!file.type.startsWith("image/")) {
       toast.error("Subí un archivo de imagen válido.");
@@ -138,7 +147,7 @@ const Dashboard = () => {
 
       toast.success(response.message);
       stopEditing();
-      await loadDashboardData();
+      await loadProducts(); // only products need refreshing after a product mutation
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -150,20 +159,13 @@ const Dashboard = () => {
     const confirmed = window.confirm(
       "¿Seguro que querés eliminar este producto?",
     );
-
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       const response = await deleteProductService(productId);
       toast.success(response.message);
-
-      if (editingProductId === productId) {
-        stopEditing();
-      }
-
-      await loadDashboardData();
+      if (editingProductId === productId) stopEditing();
+      await loadProducts(); // only products need refreshing
     } catch (error) {
       toast.error(error.message);
     }
@@ -172,13 +174,14 @@ const Dashboard = () => {
   return (
     <section className="space-y-10 py-10">
       <div className="grid gap-8 xl:grid-cols-[0.95fr_1.25fr]">
+        {/* ── Form ─────────────────────────────────────────── */}
         <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm xl:sticky xl:top-6 xl:h-fit">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
                 Admin
               </p>
-              <h1 className="text-3xl font-bold">Alta de productos</h1>
+              <h1 className="text-3xl font-bold">Dashboard de productos</h1>
             </div>
             {editingProductId && (
               <button
@@ -206,7 +209,7 @@ const Dashboard = () => {
                 })}
                 className="input input-bordered w-full"
                 id="title"
-                placeholder="Título del producto"
+                placeholder="Hydra Glow Serum"
                 type="text"
               />
               {errors.title && (
@@ -242,20 +245,32 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div>
                 <label className="label" htmlFor="image">
-                  <span className="label-text">Imagen</span>
+                  <span className="label-text">Imagen (URL o subida)</span>
                 </label>
-              </div>
-              <div>
                 <input
-                  accept="image/*"
-                  className="file-input file-input-bordered w-full"
-                  onChange={handleImageUpload}
-                  type="file"
+                  {...register("image", {
+                    required: "Ingresá una imagen o subí un archivo.",
+                  })}
+                  className="input input-bordered w-full"
+                  id="image"
+                  placeholder="https://..."
+                  type="text"
                 />
+                {errors.image && (
+                  <p className="mt-2 text-sm text-error">
+                    {errors.image.message}
+                  </p>
+                )}
               </div>
+              <input
+                accept="image/*"
+                className="file-input file-input-bordered w-full"
+                onChange={handleImageUpload}
+                type="file"
+              />
               {currentImage && (
                 <img
-                  alt="Vista previa del producto"
+                  alt="Vista previa"
                   className="h-32 w-32 rounded-2xl object-cover shadow"
                   src={currentImage}
                 />
@@ -340,6 +355,7 @@ const Dashboard = () => {
           </form>
         </div>
 
+        {/* ── Product list ─────────────────────────────────── */}
         <div className="space-y-4">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
@@ -348,7 +364,7 @@ const Dashboard = () => {
             <h2 className="text-3xl font-bold">Productos cargados</h2>
           </div>
 
-          {loading ? (
+          {productsLoading ? (
             <PageLoader message="Cargando inventario..." />
           ) : sortedProducts.length === 0 ? (
             <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
@@ -417,6 +433,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* ── Orders ─────────────────────────────────────────── */}
       <div className="space-y-4">
         <div>
           <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
@@ -425,7 +442,7 @@ const Dashboard = () => {
           <h2 className="text-3xl font-bold">Órdenes recientes</h2>
         </div>
 
-        {loading ? (
+        {ordersLoading ? (
           <PageLoader message="Cargando órdenes..." />
         ) : sortedOrders.length === 0 ? (
           <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
@@ -461,7 +478,13 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <span
-                    className={`badge badge-lg ${order.status === "approved" ? "badge-success" : order.status === "pending" ? "badge-warning" : "badge-ghost"}`}
+                    className={`badge badge-lg ${
+                      order.status === "approved"
+                        ? "badge-success"
+                        : order.status === "pending"
+                          ? "badge-warning"
+                          : "badge-ghost"
+                    }`}
                   >
                     {order.status}
                   </span>

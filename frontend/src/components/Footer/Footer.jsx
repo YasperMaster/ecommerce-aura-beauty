@@ -23,7 +23,7 @@ const Footer = () => {
             rel="noreferrer"
             target="_blank"
           >
-            <FaWhatsapp /> 3464 594165
+            <FaWhatsapp /> +54 346 459-4165
           </a>
         </div>
       </div>

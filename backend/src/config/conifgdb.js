@@ -8,11 +8,21 @@ export const connectDB = async () => {
   }
 
   const dbURI = dbUriTemplate
-    .replace("<db_username>", process.env.MONGO_DB_USER || "")
-    .replace("<db_password>", process.env.MONGO_DB_PASSWORD || "")
+    .replace(
+      "<db_username>",
+      encodeURIComponent(process.env.MONGO_DB_USER || ""),
+    )
+    .replace(
+      "<db_password>",
+      encodeURIComponent(process.env.MONGO_DB_PASSWORD || ""),
+    )
     .replace("<db_name>", process.env.MONGO_DB_NAME || "");
 
-  await mongoose.connect(dbURI);
+  await mongoose.connect(dbURI, {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 10000,
+  });
+
   console.log("Connected to MongoDB");
 };
 

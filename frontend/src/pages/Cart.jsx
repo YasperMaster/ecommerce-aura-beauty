@@ -21,11 +21,7 @@ const Cart = () => {
 
     if (!isAuthenticated) {
       toast.error("Necesitás iniciar sesión para comprar.");
-      navigate("/login", {
-        state: {
-          redirectTo: "/cart",
-        },
-      });
+      navigate("/login", { state: { redirectTo: "/cart" } });
       return;
     }
 
@@ -79,8 +75,9 @@ const Cart = () => {
             onRemove={() => removeItem(item.id)}
           />
         ))}
+
         <Link
-          className="inline-flex items-center gap-2 text-sm text-primary underline-offset-4 hover:underline"
+          className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
           to="/"
         >
           ← Añadí más productos
@@ -91,12 +88,8 @@ const Cart = () => {
         <h2 className="text-2xl font-bold">Resumen</h2>
         <div className="mt-6 space-y-3 text-sm">
           <div className="flex items-center justify-between">
-            <span>Productos</span>
-            <span>{items.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <span>Artículos</span>
+            <span>{items.reduce((sum, item) => sum + item.quantity, 0)}</span>
           </div>
           <div className="flex items-center justify-between text-lg font-bold">
             <span>Total</span>

@@ -4,18 +4,7 @@ import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useUser } from "../../context/UserContext";
-
-const getInputStateClassName = (value, hasError) => {
-  if (hasError) {
-    return "border-red-500 outline-red-500 focus:outline-red-500";
-  }
-
-  if (value) {
-    return "border-success outline-success focus:outline-success";
-  }
-
-  return "";
-};
+import { getInputStateClassName } from "../../utils/formHelpers";
 
 const RegisterForm = () => {
   const navigate = useNavigate();
@@ -27,9 +16,7 @@ const RegisterForm = () => {
     watch,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm({
-    mode: "onChange",
-  });
+  } = useForm({ mode: "onChange" });
 
   const [showPassword, setShowPassword] = useState(false);
   const usernameValue = watch("username", "");
@@ -72,7 +59,7 @@ const RegisterForm = () => {
           })}
           autoComplete="username"
           className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
-            usernameValue && !errors.username,
+            Boolean(usernameValue && !errors.username),
             Boolean(errors.username),
           )}`}
           placeholder="Nombre de usuario"
@@ -100,7 +87,7 @@ const RegisterForm = () => {
           })}
           autoComplete="email"
           className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
-            emailValue && !errors.email,
+            Boolean(emailValue && !errors.email),
             Boolean(errors.email),
           )}`}
           placeholder="Correo electrónico"
@@ -128,7 +115,7 @@ const RegisterForm = () => {
           })}
           autoComplete="new-password"
           className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
-            passwordValue && !errors.password,
+            Boolean(passwordValue && !errors.password),
             Boolean(errors.password),
           )}`}
           placeholder="Contraseña"

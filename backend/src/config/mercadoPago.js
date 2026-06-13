@@ -1,22 +1,40 @@
 import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
-import dotenv from "dotenv";
-dotenv.config();
 
+// ---------------------------------------------------------------------------
+// Token mode detection
+// Official docs: https://www.mercadopago.com.ar/developers/en/docs/your-integrations/credentials
+//   TEST-*     → sandbox / test credentials
+//   APP_USR-*  → production credentials
+// ---------------------------------------------------------------------------
+export const isTestToken = (token = "") => token.startsWith("TEST-");
+
+export const getAccessToken = () => {
+  const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+
+  if (!token) {
+    throw new Error("MERCADO_PAGO_ACCESS_TOKEN is not configured");
+  }
+
+  return token;
+};
+
+// Singleton — lazily initialized, invalidated when the token changes
+let cachedToken = null;
 let mercadoPagoClients = null;
 
 export const getMercadoPagoClients = () => {
-  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+  const token = getAccessToken();
 
-  if (!accessToken) {
-    throw new Error("MERCADO_PAGO_ACCESS_TOKEN is not configured");
+  // Reset cache if token has changed (e.g. after hot-reload in dev)
+  if (token !== cachedToken) {
+    cachedToken = token;
+    mercadoPagoClients = null;
   }
 
   if (!mercadoPagoClients) {
     const client = new MercadoPagoConfig({
-      accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN,
-      options: {
-        timeout: 5000,
-      },
+      accessToken: token,
+      options: { timeout: 8000 },
     });
 
     mercadoPagoClients = {
