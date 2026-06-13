@@ -7,6 +7,7 @@ import { seedProducts } from "./config/seedProducts.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
+import webHookRoutes from "./routes/webHookRoutes.js";
 
 dotenv.config({
   path: new URL("../.env", import.meta.url),
@@ -50,6 +51,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/webhook", webHookRoutes);
 
 app.use((error, _req, res, _next) => {
   console.error(error);
