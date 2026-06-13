@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 import webHookRoutes from "./routes/webHookRoutes.js";
+import helmet from "helmet";
 
 dotenv.config({
   path: new URL("../.env", import.meta.url),
@@ -43,6 +44,7 @@ app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
+app.use(helmet());
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
