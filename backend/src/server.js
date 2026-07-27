@@ -14,12 +14,10 @@ import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 
-// Load environment variables
 dotenv.config({
   path: new URL("../.env", import.meta.url),
 });
 
-// Validate environment before starting
 validateEnvironment();
 
 const app = express();
