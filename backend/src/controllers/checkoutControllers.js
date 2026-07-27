@@ -9,6 +9,7 @@ import {
   isTestToken,
 } from "../config/mercadoPago.js";
 import { sendAdminPurchaseEmail } from "../utils/emailNotifications.js";
+import { createLogger } from "../utils/logger.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -20,6 +21,8 @@ const normalizeBackendUrl = () =>
   (process.env.BACKEND_URL || "").replace(/\/$/, "");
 
 const isLocalUrl = (value) => /localhost|127\.0\.0\.1/i.test(value);
+
+const logger = createLogger("checkoutControllers");
 
 /**
  * Validate configuration before attempting a preference creation.
@@ -61,23 +64,47 @@ const getMercadoPagoBlockingError = () => {
 // Webhook signature validation
 // Docs: https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Webhook signature validation - NOW MANDATORY IN PRODUCTION
+// Docs: https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks
+// ---------------------------------------------------------------------------
+
 const validateMercadoPagoSignature = (req) => {
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  const isProduction = process.env.NODE_ENV === "production";
 
-  // Skip validation when no secret is set (test / early dev)
-  if (!secret) return true;
+  // In production, webhook secret is MANDATORY
+  if (isProduction && !secret) {
+    logger.error("MERCADOPAGO_WEBHOOK_SECRET not configured in production");
+    return false;
+  }
+
+  // In development without secret, allow webhook (for testing)
+  if (!secret) {
+    logger.warn(
+      "Webhook processed without signature validation (development mode)",
+    );
+    return true;
+  }
 
   try {
     const signature = req.headers["x-signature"];
     const requestId = req.headers["x-request-id"];
 
-    if (!signature || !requestId) return false;
+    if (!signature || !requestId) {
+      logger.warn("Webhook: missing signature or request-id headers");
+      return false;
+    }
 
     const parts = signature.split(",");
     const ts = parts.find((p) => p.startsWith("ts="))?.split("=")[1];
     const hash = parts.find((p) => p.startsWith("v1="))?.split("=")[1];
 
-    if (!ts || !hash) return false;
+    if (!ts || !hash) {
+      logger.warn("Webhook: invalid signature format");
+      return false;
+    }
 
     const dataId =
       req.body?.data?.id || req.query["data.id"] || req.query.id || "";
@@ -90,11 +117,21 @@ const validateMercadoPagoSignature = (req) => {
       .update(manifest)
       .digest("hex");
 
-    return crypto.timingSafeEqual(
+    const isValid = crypto.timingSafeEqual(
       Buffer.from(hash, "hex"),
       Buffer.from(expectedHash, "hex"),
     );
-  } catch {
+
+    if (!isValid) {
+      logger.warn(
+        { dataId, requestId },
+        "Webhook: signature validation failed",
+      );
+    }
+
+    return isValid;
+  } catch (error) {
+    logger.error(error, "Webhook: signature validation error");
     return false;
   }
 };
@@ -274,13 +311,11 @@ export const createMercadoPagoPreference = async (req, res) => {
       preferenceBody.notification_url = `${backendUrl}/api/checkout/mercadopago/webhook`;
     }
 
-    // Idempotency key: use the orderId so retries don't create duplicate preferences
     const preferenceResponse = await preference.create({
       body: preferenceBody,
       requestOptions: { idempotencyKey: orderId },
     });
 
-    // Use sandbox_init_point with test tokens, init_point with production tokens
     const checkoutUrl = testMode
       ? preferenceResponse.sandbox_init_point || preferenceResponse.init_point
       : preferenceResponse.init_point || preferenceResponse.sandbox_init_point;
@@ -331,9 +366,10 @@ export const createMercadoPagoPreference = async (req, res) => {
 
 export const mercadoPagoWebhook = async (req, res) => {
   try {
+    // Validate signature - will reject in production if no secret
     if (!validateMercadoPagoSignature(req)) {
-      console.warn("[webhook] Invalid signature rejected");
-      return res.status(401).json({ error: "Firma de webhook no válida." });
+      logger.warn("Webhook rejected: invalid signature");
+      return res.status(401).json({ error: "Invalid webhook signature." });
     }
 
     const notificationType =
@@ -345,6 +381,10 @@ export const mercadoPagoWebhook = async (req, res) => {
       req.query.id;
 
     if (notificationType !== "payment" || !paymentId) {
+      logger.debug(
+        { notificationType, paymentId },
+        "Webhook: non-payment notification",
+      );
       return res.status(200).json({ received: true });
     }
 
@@ -353,13 +393,14 @@ export const mercadoPagoWebhook = async (req, res) => {
     const orderId = paymentData.external_reference;
 
     if (!orderId) {
+      logger.warn({ paymentId }, "Webhook: no orderId in payment data");
       return res.status(200).json({ received: true });
     }
 
     const order = await OrderModel.findById(orderId);
 
     if (!order) {
-      console.warn(`[webhook] Order not found: ${orderId}`);
+      logger.warn({ orderId }, "Webhook: order not found");
       return res.status(200).json({ received: true });
     }
 
@@ -376,27 +417,31 @@ export const mercadoPagoWebhook = async (req, res) => {
 
     await order.save();
 
+    logger.info(
+      { orderId, previousStatus, nextStatus, paymentId },
+      "Order status updated",
+    );
+
     if (previousStatus !== "approved" && nextStatus === "approved") {
       await maybeReserveStockAfterApproval(order);
 
       try {
         await sendAdminPurchaseEmail(order);
       } catch (notificationError) {
-        console.error(
-          "[webhook] Admin email notification failed:",
-          notificationError,
+        logger.error(
+          { orderId, error: notificationError.message },
+          "Admin email notification failed",
         );
       }
     }
 
-    console.info(
-      `[webhook] Order ${orderId} status: ${previousStatus} → ${nextStatus}`,
-    );
-
     return res.status(200).json({ received: true });
   } catch (error) {
-    console.error("[webhook] handler error:", error);
-    // Always return 200 to prevent MP from retrying indefinitely for non-recoverable errors
+    logger.error(
+      { error: error.message, requestId: req.headers["x-request-id"] },
+      "Webhook handler error",
+    );
+    // Always return 200 to prevent MP from retrying indefinitely
     return res.status(200).json({ received: true });
   }
 };
