@@ -1,0 +1,58 @@
+# Prerequisites:
+#   1. nginx-ingress controller installed in your cluster
+#   2. cert-manager installed for automatic TLS certificates
+#   3. A ClusterIssuer named "letsencrypt-prod" configured
+#
+# Install nginx-ingress:
+#   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.0/deploy/static/provider/cloud/deploy.yaml
+#
+# Install cert-manager:
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.0/cert-manager.yaml
+#
+# Then create the ClusterIssuer (see the guide for the full YAML).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: aura-beauty-ingress
+  namespace: aura-beauty
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Increase body limit for admin product image uploads (base64 can be large)
+    nginx.ingress.kubernetes.io/proxy-body-size: "2m"
+    # Timeout for backend API calls
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+spec:
+  tls:
+    - hosts:
+        - yourdomain.com # ← replace with your real domain
+      secretName: frontend-tls
+    - hosts:
+        - api.yourdomain.com # ← replace with your real API subdomain
+      secretName: backend-tls
+
+  rules:
+    # ── Frontend ─────────────────────────────────────────────────────────
+    - host: yourdomain.com # ← replace
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-svc
+                port:
+                  number: 80
+
+    # ── Backend API ──────────────────────────────────────────────────────
+    - host: api.yourdomain.com # ← replace
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-svc
+                port:
+                  number: 80

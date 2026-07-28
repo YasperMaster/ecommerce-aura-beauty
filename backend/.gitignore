@@ -77,3 +77,6 @@ temp/
 # MongoDB local files
 *.mongodb
 mongod.lock
+
+
+k8s/02-secrets.yaml

@@ -1,0 +1,12 @@
+k8s/02-secrets.yaml
+
+.env
+.env.*
+!.env.example
+package-lock.json
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/

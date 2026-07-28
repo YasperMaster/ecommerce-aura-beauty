@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: aura-beauty
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+
+  # ── Replace these with your real public domain names ──────────────────
+  FRONTEND_URL: "https://yourdomain.com"
+  BACKEND_URL: "https://api.yourdomain.com"
+
+  # ── MongoDB ────────────────────────────────────────────────────────────
+  MONGO_DB_NAME: "aurabeautyDB"
+
+  # ── JWT ────────────────────────────────────────────────────────────────
+  JWT_EXPIRES_IN: "1h"
+
+  # ── Mercado Pago ───────────────────────────────────────────────────────
+  # Set to "true" only when testing with sandbox credentials.
+  # Remove or set to "false" for real production payments.
+  MERCADO_PAGO_TEST_MODE: "false"

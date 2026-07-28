@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: aura-beauty
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0 # zero-downtime: new pod must be ready before old is killed
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      # ── Graceful shutdown ──────────────────────────────────────────────
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: backend
+          # Replace with your actual Docker Hub username / registry
+          image: YOURDOCKERHUBUSER/aura-beauty-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3001
+
+          # ── Load all non-secret config from ConfigMap ──────────────────
+          envFrom:
+            - configMapRef:
+                name: backend-config
+
+          # ── Load secrets individually ──────────────────────────────────
+          env:
+            - name: MONGO_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: MONGO_DB_URI
+            - name: MONGO_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: MONGO_DB_USER
+            - name: MONGO_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: MONGO_DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: JWT_SECRET
+            - name: MERCADO_PAGO_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secrets
+                  key: MERCADO_PAGO_ACCESS_TOKEN
+
+          # ── Probes ────────────────────────────────────────────────────
+          # The /api/health route is defined in server.js
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # ── Resource limits ──────────────────────────────────────────
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # ── Security ─────────────────────────────────────────────────
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false # dotenv tries to read a file; set true only if you remove dotenv
+            runAsNonRoot: true
+            runAsUser: 1000
+
+      # ── Spread pods across nodes for resilience ─────────────────────
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: backend

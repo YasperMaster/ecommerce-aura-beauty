@@ -9,7 +9,6 @@ import { connectDB, disconnectDB } from "./config/conifgdb.js";
 import { seedProducts } from "./config/seedProducts.js";
 import { validateEnvironment } from "./config/validateEnv.js";
 import { logger } from "./utils/logger.js";
-import { doubleCsrf } from "csrf-csrf";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
