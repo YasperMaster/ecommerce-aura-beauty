@@ -179,9 +179,9 @@ const Dashboard = () => {
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
-                Admin
+                Panel de administrador
               </p>
-              <h1 className="text-3xl font-bold">Dashboard de productos</h1>
+              <h1 className="text-3xl font-bold">Cargá un producto</h1>
             </div>
             {editingProductId && (
               <button
@@ -209,7 +209,7 @@ const Dashboard = () => {
                 })}
                 className="input input-bordered w-full"
                 id="title"
-                placeholder="Hydra Glow Serum"
+                placeholder="Título del producto"
                 type="text"
               />
               {errors.title && (
@@ -245,7 +245,7 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div>
                 <label className="label" htmlFor="image">
-                  <span className="label-text">Imagen (URL o subida)</span>
+                  <span className="label-text">Imagen (Pegá una URL o subí un archivo)</span>
                 </label>
                 <input
                   {...register("image", {
