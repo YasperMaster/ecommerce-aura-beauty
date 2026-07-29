@@ -308,7 +308,7 @@ export const createMercadoPagoPreference = async (req, res) => {
 
     // Only include notification_url when it is a publicly reachable address
     if (backendUrl && !isLocalUrl(backendUrl)) {
-      preferenceBody.notification_url = `${backendUrl}/api/checkout/mercadopago/webhook`;
+      preferenceBody.notification_url = `${backendUrl}/api/v1/checkout/mercadopago/webhook`;
     }
 
     const preferenceResponse = await preference.create({

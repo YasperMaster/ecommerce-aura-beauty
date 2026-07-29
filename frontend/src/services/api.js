@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = (
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:3001/api"
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:3001/api/v1"
 ).replace(/\/$/, "");
 
 const defaultConfig = {

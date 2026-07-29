@@ -92,6 +92,9 @@ const Navbar = () => {
             <li>
               <Link to="/cart">Carrito</Link>
             </li>
+            <li>
+              <Link to="/products">Productos</Link>
+            </li>
             {userInfo?.isAdmin && (
               <li>
                 <Link to="/admin">Dashboard</Link>

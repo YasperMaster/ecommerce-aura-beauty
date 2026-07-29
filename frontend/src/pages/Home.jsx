@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import heroImage from "../assets/background.png";
 import PageLoader from "../components/common/PageLoader";
 import ProductGrid from "../components/products/ProductGrid";
@@ -6,6 +7,7 @@ import { useCart } from "../context/CartContext";
 import { getProductsService } from "../services/productServices";
 
 const Home = () => {
+  const { pathname } = useLocation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,6 +30,12 @@ const Home = () => {
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
+
+  useEffect(() => {
+    if (pathname === "/products") {
+      document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [pathname, loading]);
 
   return (
     <div className="space-y-10 py-10">

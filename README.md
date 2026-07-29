@@ -30,16 +30,30 @@ npm --prefix frontend run dev
 ## Resumen de la API
 
 ### Auth
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/profile`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/profile`
 
 ### Productos
-- `GET /api/products`
-- `GET /api/products/:productId`
+- `GET /api/v1/products`
+- `GET /api/v1/products/:productId`
+- `GET /api/v1/products/admin` (admin)
+- `POST /api/v1/products` (admin)
+- `PUT /api/v1/products/:productId` (admin)
+- `DELETE /api/v1/products/:productId` (admin)
 
 ### Checkout
-- `POST /api/checkout/mercadopago/preference`
-- `POST /api/checkout/mercadopago/webhook`
-- `GET /api/checkout/orders/:orderId`
+- `POST /api/v1/checkout/mercadopago/preference`
+- `POST /api/v1/checkout/mercadopago/webhook`
+- `GET /api/v1/checkout/orders/:orderId`
+- `GET /api/v1/checkout/orders/admin` (admin)
+
+### Health
+- `GET /api/health`
+
+## Variables de entorno
+
+Frontend: `VITE_BACKEND_URL` (default local: `http://localhost:3001/api/v1`)
+
+Backend: ver `backend/src/config/validateEnv.js` para variables requeridas.

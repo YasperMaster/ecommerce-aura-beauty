@@ -19,18 +19,18 @@ const router = express.Router();
 router.get("/", getProducts);
 
 /**
- * @route   GET /api/v1/products/:productId
- * @desc    Get product by ID
- * @access  Public
- */
-router.get("/:productId", getProductById);
-
-/**
  * @route   GET /api/v1/products/admin
  * @desc    Get all products for admin (including inactive)
  * @access  Private (Admin only)
  */
 router.get("/admin", requireAuth, requireAdmin, getAdminProducts);
+
+/**
+ * @route   GET /api/v1/products/:productId
+ * @desc    Get product by ID
+ * @access  Public
+ */
+router.get("/:productId", getProductById);
 
 /**
  * @route   POST /api/v1/products

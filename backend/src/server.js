@@ -97,14 +97,28 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
 // 5. Data sanitization (prevent NoSQL injection)
-// Remove $ and . from keys in request body, params, query
-app.use(
-  mongoSanitize({
-    onSanitize: ({ req, key }) => {
-      logger.warn({ key }, "Sanitized potentially malicious input");
-    },
-  }),
-);
+// Express 5 exposes req.query as read-only; sanitize only mutable properties.
+const mongoSanitizeOptions = {
+  onSanitize: ({ key }) => {
+    logger.warn({ key }, "Sanitized potentially malicious input");
+  },
+};
+
+app.use((req, _res, next) => {
+  try {
+    if (req.body) {
+      req.body = mongoSanitize.sanitize(req.body, mongoSanitizeOptions);
+    }
+
+    if (req.params) {
+      req.params = mongoSanitize.sanitize(req.params, mongoSanitizeOptions);
+    }
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ============================================================================
 // HEALTH CHECK
