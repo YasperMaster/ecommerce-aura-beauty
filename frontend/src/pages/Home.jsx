@@ -42,14 +42,14 @@ const Home = () => {
           </div>
           <div className="max-w-xl">
             <span className="badge badge-primary badge-outline mb-4">
-              Nueva colección
+              Nuevo sitio web
             </span>
             <h1 className="text-4xl font-black leading-tight lg:text-5xl">
-              Rutinas de belleza modernas para todos los días
+              Productos de belleza para todos los días
             </h1>
             <p className="py-6 text-base-content/75">
-              Descubrí skincare y makeup curados para una experiencia premium.
-              Registrate, armá tu carrito y finalizá tu compra con Mercado Pago.
+              Descubrí productos de belleza.
+              Registrate, armá tu carrito y finalizá tu compra.
             </p>
             <a className="btn btn-primary" href="#products">
               Ver productos

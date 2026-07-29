@@ -51,7 +51,7 @@ const Navbar = () => {
             <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
               Aura Beauty
             </p>
-            <p className="text-sm text-base-content/70">Cosmética y skincare</p>
+            <p className="text-sm text-base-content/70">Productos cosméticos</p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3 self-end lg:self-auto">
             {loading ? (

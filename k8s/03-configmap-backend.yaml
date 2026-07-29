@@ -7,9 +7,8 @@ data:
   NODE_ENV: "production"
   PORT: "3001"
 
-  # ── Replace these with your real public domain names ──────────────────
-  FRONTEND_URL: "https://yourdomain.com"
-  BACKEND_URL: "https://api.yourdomain.com"
+  FRONTEND_URL: "https://tiendaaurabeauty.com"
+  BACKEND_URL: "https://api.tiendaaurabeauty.com"
 
   # ── MongoDB ────────────────────────────────────────────────────────────
   MONGO_DB_NAME: "aurabeautyDB"

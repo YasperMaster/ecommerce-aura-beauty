@@ -26,15 +26,15 @@ metadata:
 spec:
   tls:
     - hosts:
-        - yourdomain.com # ← replace with your real domain
+        - tiendaaurabeauty.com
       secretName: frontend-tls
     - hosts:
-        - api.yourdomain.com # ← replace with your real API subdomain
+        - api.tiendaaurabeauty.com
       secretName: backend-tls
 
   rules:
     # ── Frontend ─────────────────────────────────────────────────────────
-    - host: yourdomain.com # ← replace
+    - host: tiendaaurabeauty.com
       http:
         paths:
           - path: /
@@ -46,7 +46,7 @@ spec:
                   number: 80
 
     # ── Backend API ──────────────────────────────────────────────────────
-    - host: api.yourdomain.com # ← replace
+    - host: api.tiendaaurabeauty.com
       http:
         paths:
           - path: /

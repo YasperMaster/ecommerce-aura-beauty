@@ -28,7 +28,7 @@ export const getApiErrorMessage = (error, fallbackMessage) => {
   }
 
   if (error?.message === "Network Error" || !error?.response) {
-    return "No se pudo conectar con el backend.";
+    return "No se pudo conectar con la base de datos. Intentá de nuevo más tarde.";
   }
 
   return error?.response?.data?.message || fallbackMessage;

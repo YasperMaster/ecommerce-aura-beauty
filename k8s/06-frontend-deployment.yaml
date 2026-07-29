@@ -27,7 +27,7 @@ spec:
           # Replace with your actual Docker Hub username / registry
           # Note: VITE_BACKEND_URL is baked into this image at build time.
           # If you need to change it, rebuild and push a new image tag.
-          image: YOURDOCKERHUBUSER/aura-beauty-frontend:latest
+          image: tomasy155/aura-beauty-frontend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
