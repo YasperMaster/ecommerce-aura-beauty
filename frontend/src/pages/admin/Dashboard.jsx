@@ -9,7 +9,7 @@ import {
   getAdminProductsService,
   updateProductService,
 } from "../../services/productServices";
-import { formatCurrency } from "../../utils/formatters";
+import { formatCurrency, formatDateTime } from "../../utils/formatters";
 
 const emptyValues = {
   title: "",
@@ -474,6 +474,10 @@ const Dashboard = () => {
                       <span>
                         Estado:{" "}
                         <strong className="capitalize">{order.status}</strong>
+                      </span>
+                      <span>
+                        Fecha:{" "}
+                        <strong>{formatDateTime(order.createdAt)}</strong>
                       </span>
                     </div>
                   </div>

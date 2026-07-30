@@ -5,3 +5,11 @@ export const formatCurrency = (value) => {
         maximumFractionDigits: 0,
     }).format(value)
 }
+
+export const formatDateTime = (value) => {
+    if (!value) return "";
+    return new Intl.DateTimeFormat("es-AR", {
+        dateStyle: "short",
+        timeStyle: "short",
+    }).format(new Date(value));
+};

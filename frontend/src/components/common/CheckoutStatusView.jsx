@@ -134,13 +134,21 @@ const CheckoutStatusView = ({ variant }) => {
     };
   }, [fetchOrder, scheduleNextPoll, stopPolling]);
 
-  // Clear cart optimistically when the user lands on the success page
-  // (even before the webhook confirms — the user is done with the cart)
+  // Clear cart when the user lands on the success page (optimistic — the
+  // user is done with the cart) OR when the order transitions to "approved"
+  // during polling on the pending page.
   useEffect(() => {
     if (variant === "success") {
       clearCart();
     }
   }, [variant, clearCart]);
+
+  // Also clear the cart when a pending order becomes approved during polling
+  useEffect(() => {
+    if (order?.status === "approved") {
+      clearCart();
+    }
+  }, [order?.status, clearCart]);
 
   if (loading) {
     return <PageLoader message="Consultando el estado de tu compra..." />;

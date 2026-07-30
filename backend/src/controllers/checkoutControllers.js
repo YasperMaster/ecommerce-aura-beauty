@@ -65,11 +65,6 @@ const getMercadoPagoBlockingError = () => {
 // Docs: https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Webhook signature validation - NOW MANDATORY IN PRODUCTION
-// Docs: https://www.mercadopago.com.ar/developers/en/docs/your-integrations/notifications/webhooks
-// ---------------------------------------------------------------------------
-
 const validateMercadoPagoSignature = (req) => {
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
   const isProduction = process.env.NODE_ENV === "production";
@@ -197,6 +192,85 @@ const maybeReserveStockAfterApproval = async (order) => {
 };
 
 /**
+ * Sync a single order's status from Mercado Pago.
+ *
+ * This is the fallback path for environments where webhooks cannot reach the
+ * backend (e.g. local development, or a misconfigured notification_url).
+ * It queries the Mercado Pago payments search API by external_reference
+ * (which we set to the orderId when creating the preference) and updates the
+ * order in the database if the payment status has changed.
+ *
+ * Returns the (possibly updated) order document, or null if the order is not
+ * found or Mercado Pago is unavailable.
+ */
+const syncOrderFromMercadoPago = async (order) => {
+  // Only sync orders that are still in a non-terminal state
+  const nonTerminalStatuses = ["pending", "in_process"];
+  if (!nonTerminalStatuses.includes(order.status)) {
+    return order;
+  }
+
+  try {
+    const { payment } = getMercadoPagoClients();
+    const orderId = order._id.toString();
+
+    const searchResult = await payment.search({
+      options: { external_reference: orderId, limit: 1 },
+    });
+
+    const paymentData = searchResult.results?.[0];
+
+    if (!paymentData) {
+      // No payment found yet — the buyer may not have completed checkout
+      return order;
+    }
+
+    const previousStatus = order.status;
+    const nextStatus = PAYMENT_STATUS_MAP[paymentData.status] || "pending";
+
+    if (previousStatus === nextStatus) {
+      return order;
+    }
+
+    order.status = nextStatus;
+    order.mercadoPago.paymentId = paymentData.id || null;
+    order.mercadoPago.status = paymentData.status || "";
+    order.mercadoPago.statusDetail = paymentData.status_detail || "";
+    order.mercadoPago.merchantOrderId = paymentData.order?.id
+      ? String(paymentData.order.id)
+      : "";
+
+    await order.save();
+
+    logger.info(
+      { orderId, previousStatus, nextStatus, paymentId: paymentData.id },
+      "Order status synced from Mercado Pago",
+    );
+
+    if (previousStatus !== "approved" && nextStatus === "approved") {
+      await maybeReserveStockAfterApproval(order);
+
+      try {
+        await sendAdminPurchaseEmail(order);
+      } catch (notificationError) {
+        logger.error(
+          { orderId, error: notificationError.message },
+          "Admin email notification failed during sync",
+        );
+      }
+    }
+
+    return order;
+  } catch (error) {
+    logger.error(
+      { orderId: order._id, error: error.message },
+      "Failed to sync order from Mercado Pago",
+    );
+    return order;
+  }
+};
+
+/**
  * Build a single MP preference item.
  * Only include picture_url when it is a publicly accessible HTTP URL — base64
  * data URIs or local paths are rejected by the MP API.
@@ -295,9 +369,13 @@ export const createMercadoPagoPreference = async (req, res) => {
         failure: failureUrl,
         pending: pendingUrl,
       },
-      // auto_return: only supported when all back_urls are HTTPS public URLs
-      // In test mode with localhost URLs we skip it to avoid the API error
-      ...(testMode || !isLocalUrl(normalizeFrontendUrl()) ? {} : {}),
+      // auto_return: "approved" makes Mercado Pago automatically redirect the
+      // buyer back to the success URL when the payment is approved, instead of
+      // showing a "return to site" button the user has to click.
+      // The MP API only accepts this when back_urls.success is a public HTTPS
+      // URL — localhost URLs are rejected. So we only set it in production.
+      // In local dev the buyer clicks "return to site" manually.
+      ...(isLocalUrl(successUrl) ? {} : { auto_return: "approved" }),
       external_reference: orderId,
       metadata: {
         orderId,
@@ -459,7 +537,13 @@ export const getOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Compra no encontrada." });
     }
 
-    return res.status(200).json(order);
+    // Sync with Mercado Pago in case the webhook hasn't arrived yet
+    // (common in local development where notification_url is omitted).
+    // This ensures the user sees the up-to-date status when they return
+    // from the Mercado Pago checkout.
+    const syncedOrder = await syncOrderFromMercadoPago(order);
+
+    return res.status(200).json(syncedOrder);
   } catch (error) {
     console.error("[order] getOrderStatus error:", error);
     return res.status(500).json({ message: "No se pudo obtener la compra." });
@@ -475,7 +559,15 @@ export const getAdminOrders = async (_req, res) => {
         "_id user userEmail items totalAmount currency status mercadoPago createdAt updatedAt",
       );
 
-    return res.status(200).json(orders);
+    // Sync non-terminal orders with Mercado Pago so the admin dashboard
+    // reflects the real payment status even when webhooks are unavailable
+    // (e.g. local development). We only sync pending/in_process orders to
+    // avoid unnecessary API calls for already-terminal orders.
+    const syncedOrders = await Promise.all(
+      orders.map((order) => syncOrderFromMercadoPago(order)),
+    );
+
+    return res.status(200).json(syncedOrders);
   } catch (error) {
     console.error("[order] getAdminOrders error:", error);
     return res

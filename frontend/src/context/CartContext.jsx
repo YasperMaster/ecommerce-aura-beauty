@@ -6,16 +6,29 @@ import {
   useMemo,
   useState,
 } from "react";
-import { loadCart, saveCart } from "../utils/cartStorage";
+import { useUser } from "./UserContext";
+import { clearStoredCart, loadCart, saveCart } from "../utils/cartStorage";
 
 export const CartContext = createContext(null);
 
 export const CartContextProvider = ({ children }) => {
-  const [items, setItems] = useState(() => loadCart());
+  const { userInfo } = useUser();
+  const userId = userInfo?.id || null;
 
+  // Load the cart for the current user (or anonymous cart if not logged in).
+  // When the user changes (login/logout/switch account), the cart reloads
+  // from that user's localStorage key so carts don't leak between accounts.
+  const [items, setItems] = useState(() => loadCart(userId));
+
+  // Reload cart from storage whenever the user identity changes
   useEffect(() => {
-    saveCart(items);
-  }, [items]);
+    setItems(loadCart(userId));
+  }, [userId]);
+
+  // Persist cart to the current user's storage key
+  useEffect(() => {
+    saveCart(items, userId);
+  }, [items, userId]);
 
   const addItem = useCallback((product) => {
     setItems((currentItems) => {
@@ -113,7 +126,9 @@ export const CartContextProvider = ({ children }) => {
 
   const clearCart = useCallback(() => {
     setItems([]);
-  }, []);
+    // Also remove from localStorage so a page refresh doesn't restore it
+    clearStoredCart(userId);
+  }, [userId]);
 
   const value = useMemo(() => {
     const subtotal = items.reduce(
