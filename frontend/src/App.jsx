@@ -1,19 +1,20 @@
 import { Route, Routes } from "react-router";
-import AdminRoute from "./components/common/AdminRoute";
-import PrivateRoute from "./components/common/PrivateRoute";
-import { CartContextProvider } from "./context/CartContext";
-import { UserContextProvider } from "./context/UserContext";
-import Layout from "./layout/Layout";
-import Cart from "./pages/Cart";
-import CheckoutFailure from "./pages/CheckoutFailure";
-import CheckoutPending from "./pages/CheckoutPending";
-import CheckoutSuccess from "./pages/CheckoutSuccess";
-import ForgotPassword from "./pages/ForgotPassword";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import MyPurchases from "./pages/MyPurchases";
-import Register from "./pages/Register";
-import Dashboard from "./pages/admin/Dashboard";
+import AdminRoute from "./components/common/AdminRoute.jsx";
+import PrivateRoute from "./components/common/PrivateRoute.jsx";
+import { CartContextProvider } from "./context/CartContext.jsx";
+import { UserContextProvider } from "./context/UserContext.jsx";
+import Layout from "./layout/Layout.jsx";
+import Cart from "./pages/Cart.jsx";
+import CheckoutFailure from "./pages/CheckoutFailure.jsx";
+import CheckoutPending from "./pages/CheckoutPending.jsx";
+import CheckoutSuccess from "./pages/CheckoutSuccess.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import Home from "./pages/Home.jsx";
+import Login from "./pages/Login.jsx";
+import MyPurchases from "./pages/MyPurchases.jsx";
+import Register from "./pages/Register.jsx";
+import Dashboard from "./pages/admin/Dashboard.jsx";
+import ProductDetail from "./pages/ProductDetail.jsx";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route element={<Layout />}>
             <Route element={<Home />} path="/" />
             <Route element={<Home />} path="/products" />
+            <Route element={<ProductDetail />} path="/product/:id" />
             <Route element={<Register />} path="/register" />
             <Route element={<Login />} path="/login" />
             <Route element={<ForgotPassword />} path="/forgot-password" />

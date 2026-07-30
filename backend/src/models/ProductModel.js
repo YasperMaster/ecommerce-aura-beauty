@@ -18,6 +18,11 @@ const ProductSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    longDescription: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     category: {
       type: String,
       trim: true,
@@ -25,9 +30,15 @@ const ProductSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
+    images: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     price: {
       type: Number,
       required: true,

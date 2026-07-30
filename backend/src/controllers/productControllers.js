@@ -4,7 +4,7 @@ import ProductModel from "../models/ProductModel.js";
 import { productSchema } from "../schemas/productSchema.js";
 
 const PUBLIC_PRODUCT_FIELDS =
-  "_id slug title description category image price stock isActive";
+  "_id slug title description longDescription category image images price stock isActive";
 const ADMIN_PRODUCT_FIELDS = `${PUBLIC_PRODUCT_FIELDS} createdAt updatedAt`;
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -40,8 +40,10 @@ const parseProductPayload = (body) =>
   productSchema.parse({
     title: body?.title,
     description: body?.description,
+    longDescription: body?.longDescription,
     category: body?.category,
     image: body?.image,
+    images: body?.images,
     price: body?.price,
     stock: body?.stock,
     isActive: body?.isActive,
@@ -140,8 +142,10 @@ export const updateProduct = async (req, res) => {
 
     existingProduct.title = parsedData.title;
     existingProduct.description = parsedData.description;
+    existingProduct.longDescription = parsedData.longDescription || existingProduct.longDescription;
     existingProduct.category = parsedData.category;
-    existingProduct.image = parsedData.image;
+    existingProduct.image = parsedData.image || existingProduct.image;
+    existingProduct.images = Array.isArray(parsedData.images) ? parsedData.images : existingProduct.images;
     existingProduct.price = parsedData.price;
     existingProduct.stock = parsedData.stock;
     existingProduct.isActive = parsedData.isActive;
