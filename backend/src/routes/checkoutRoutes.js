@@ -2,6 +2,7 @@ import express from "express";
 import {
   createMercadoPagoPreference,
   getAdminOrders,
+  getMyOrders,
   getOrderStatus,
   mercadoPagoWebhook,
 } from "../controllers/checkoutControllers.js";
@@ -35,6 +36,13 @@ router.post("/mercadopago/webhook", webhookLimiter, mercadoPagoWebhook);
  * @access  Private (Admin only)
  */
 router.get("/orders/admin", requireAuth, requireAdmin, getAdminOrders);
+
+/**
+ * @route   GET /api/v1/checkout/orders/mine
+ * @desc    Get the current user's own purchase history (approved orders only)
+ * @access  Private
+ */
+router.get("/orders/mine", requireAuth, getMyOrders);
 
 /**
  * @route   GET /api/v1/checkout/orders/:orderId

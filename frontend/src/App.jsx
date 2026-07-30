@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router";
 import AdminRoute from "./components/common/AdminRoute";
+import PrivateRoute from "./components/common/PrivateRoute";
 import { CartContextProvider } from "./context/CartContext";
 import { UserContextProvider } from "./context/UserContext";
 import Layout from "./layout/Layout";
@@ -10,6 +11,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import MyPurchases from "./pages/MyPurchases";
 import Register from "./pages/Register";
 import Dashboard from "./pages/admin/Dashboard";
 
@@ -30,6 +32,9 @@ function App() {
             <Route element={<CheckoutFailure />} path="/checkout/failure" />
             <Route element={<AdminRoute />}>
               <Route element={<Dashboard />} path="/admin" />
+            </Route>
+            <Route element={<PrivateRoute />}>
+              <Route element={<MyPurchases />} path="/mis-compras" />
             </Route>
           </Route>
         </Routes>

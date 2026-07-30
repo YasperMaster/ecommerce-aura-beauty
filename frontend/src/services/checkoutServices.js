@@ -25,6 +25,17 @@ export const getOrderStatusService = async (orderId) => {
   }
 };
 
+export const getMyOrdersService = async () => {
+  try {
+    const response = await authApi.get("/checkout/orders/mine");
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudieron cargar tus compras."),
+    );
+  }
+};
+
 export const getAdminOrdersService = async () => {
   try {
     const response = await authApi.get("/checkout/orders/admin");

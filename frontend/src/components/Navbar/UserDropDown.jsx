@@ -39,11 +39,19 @@ const UserDropDown = () => {
         <li>
           <Link to="/cart">Mi carrito</Link>
         </li>
+        <li>
+          <Link to="/mis-compras">Mis compras</Link>
+        </li>
         {userInfo?.isAdmin && (
           <li>
             <Link to="/admin">Dashboard</Link>
           </li>
         )}
+        <li>
+          <Link state={{ email: userInfo?.email }} to="/forgot-password">
+            Restablecer contraseña
+          </Link>
+        </li>
         <li>
           <button onClick={handleLogout} type="button">
             Cerrar sesión

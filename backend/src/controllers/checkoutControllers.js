@@ -550,6 +550,30 @@ export const getOrderStatus = async (req, res) => {
   }
 };
 
+/**
+ * Returns the current user's own purchase history — only orders that
+ * actually completed (status "approved"), since pending/rejected/cancelled
+ * orders aren't purchases the customer would expect to see listed here.
+ * Powers the "Mis compras" page.
+ */
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await OrderModel.find({
+      user: req.user._id,
+      status: "approved",
+    })
+      .sort({ createdAt: -1 })
+      .select("_id items totalAmount currency status createdAt");
+
+    return res.status(200).json(orders);
+  } catch (error) {
+    console.error("[order] getMyOrders error:", error);
+    return res
+      .status(500)
+      .json({ message: "No se pudieron cargar tus compras." });
+  }
+};
+
 export const getAdminOrders = async (_req, res) => {
   try {
     const orders = await OrderModel.find({})

@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useUser } from "../../context/UserContext";
 import { getInputStateClassName } from "../../utils/formHelpers";
 
 const ForgotPasswordForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { forgotPassword, resetPassword } = useUser();
 
   const [pendingEmail, setPendingEmail] = useState(null); // set once step 1 succeeds
@@ -15,7 +16,12 @@ const ForgotPasswordForm = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const emailForm = useForm({ mode: "onChange" });
+  // If we arrived here from the logged-in user's dropdown, the email is
+  // already known — prefill it so they don't have to retype it.
+  const emailForm = useForm({
+    defaultValues: { email: location.state?.email || "" },
+    mode: "onChange",
+  });
   const resetForm = useForm({ mode: "onChange" });
   const newPasswordValue = resetForm.watch("newPassword", "");
   const codeValue = resetForm.watch("code", "");
@@ -25,7 +31,7 @@ const ForgotPasswordForm = () => {
     try {
       const response = await forgotPassword(email);
       toast.success(response.message);
-      resetForm.reset({ code: "", newPassword: "" });
+      resetForm.reset({ code: "", newPassword: "" }); // defend against stale/autofilled values
       setPendingEmail(email);
     } catch (error) {
       toast.error(error.message);
