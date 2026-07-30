@@ -1,12 +1,12 @@
 # Aura Beauty Ecommerce
 
-Tienda online de maquillaje y productos de belleza. Explora productos, regístrate, inicia sesión, agrega al carrito y paga.
+Tienda online de productos de maquillaje y belleza. Explora productos, registráte, iniciá sesión, agregá productos al carrito y pagá utilizando mercadopago.
 
 ## Stack
 
 - Frontend: React, Vite, React Router, Tailwind, DaisyUI, Axios
 - Backend: Node.js, Express, MongoDB (Mongoose), autenticación con JWT
-- Pagos: Mercado Pago
+- Pagos: Mercadopago
 
 ## Estructura del proyecto
 
