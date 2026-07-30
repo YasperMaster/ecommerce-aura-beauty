@@ -29,6 +29,31 @@ export const registerService = async (data) => {
   }
 };
 
+export const verifyEmailService = async ({ email, code }) => {
+  try {
+    const response = await authApi.post("/auth/verify-email", {
+      email,
+      code,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo confirmar el código."),
+    );
+  }
+};
+
+export const resendCodeService = async (email) => {
+  try {
+    const response = await authApi.post("/auth/resend-code", { email });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo reenviar el código."),
+    );
+  }
+};
+
 export const logoutService = async () => {
   try {
     const response = await authApi.post("/auth/logout");

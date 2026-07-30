@@ -11,6 +11,8 @@ import {
   loginService,
   logoutService,
   registerService,
+  resendCodeService,
+  verifyEmailService,
 } from "../services/authServices";
 
 export const UserContext = createContext(null);
@@ -39,10 +41,20 @@ export const UserContextProvider = ({ children }) => {
     return response;
   }, []);
 
+  // No account exists yet at this point — just triggers the code email.
   const register = useCallback(async (data) => {
-    const response = await registerService(data);
+    return registerService(data);
+  }, []);
+
+  // This is when the account actually gets created and the session starts.
+  const verifyEmail = useCallback(async ({ email, code }) => {
+    const response = await verifyEmailService({ email, code });
     setUserInfo(response.user);
     return response;
+  }, []);
+
+  const resendCode = useCallback(async (email) => {
+    return resendCodeService(email);
   }, []);
 
   const logout = useCallback(async () => {
@@ -62,10 +74,21 @@ export const UserContextProvider = ({ children }) => {
       checkSession,
       login,
       register,
+      verifyEmail,
+      resendCode,
       logout,
       isAuthenticated: Boolean(userInfo?.id),
     }),
-    [userInfo, loading, checkSession, login, register, logout],
+    [
+      userInfo,
+      loading,
+      checkSession,
+      login,
+      register,
+      verifyEmail,
+      resendCode,
+      logout,
+    ],
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

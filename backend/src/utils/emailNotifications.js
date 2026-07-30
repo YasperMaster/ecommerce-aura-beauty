@@ -1,8 +1,23 @@
+import UserModel from "../models/UserModel.js";
+
 const RESEND_API_URL = "https://api.resend.com/emails";
 const EMAIL_TIMEOUT_MS = 8000;
 
-const isConfigured = () =>
-  Boolean(process.env.RESEND_API_KEY && process.env.ADMIN_NOTIFICATION_EMAIL);
+const isConfigured = () => Boolean(process.env.RESEND_API_KEY);
+
+const getAdminRecipients = async () => {
+  const admins = await UserModel.find({ isAdmin: true })
+    .select("email")
+    .lean();
+
+  const emails = admins.map((a) => a.email).filter(Boolean);
+
+  if (emails.length > 0) return emails;
+
+  return process.env.ADMIN_NOTIFICATION_EMAIL
+    ? [process.env.ADMIN_NOTIFICATION_EMAIL]
+    : [];
+};
 
 const escapeHtml = (value) =>
   String(value)
@@ -23,13 +38,19 @@ const formatOrderItems = (order) =>
 export const sendAdminPurchaseEmail = async (order) => {
   if (!isConfigured()) {
     console.log(
-      "Skipping admin email notification: RESEND_API_KEY or ADMIN_NOTIFICATION_EMAIL not configured",
+      "Skipping admin email notification: RESEND_API_KEY not configured",
     );
     return;
   }
 
-  const emailFrom =
-    process.env.EMAIL_FROM || "Aura Beauty <onboarding@resend.dev>";
+  const recipients = await getAdminRecipients();
+
+  if (recipients.length === 0) {
+    console.log(
+      "Skipping admin email notification: no admin user found and ADMIN_NOTIFICATION_EMAIL is not set",
+    );
+    return;
+  }
 
   const subject = `Nueva compra aprobada - Orden ${escapeHtml(String(order._id))}`;
 
@@ -61,6 +82,52 @@ export const sendAdminPurchaseEmail = async (order) => {
     formatOrderItems(order),
   ].join("\n");
 
+  await sendEmail({ to: recipients, subject, html, text });
+};
+
+/**
+ * Sends the 6-digit confirmation code to a user who just registered.
+ * Unlike sendAdminPurchaseEmail (fire-and-forget, safe to skip), this is on
+ * the critical path: if it can't be sent, the user can never confirm their
+ * account, so callers MUST propagate failures instead of swallowing them.
+ * Throws if RESEND_API_KEY isn't configured or the send fails.
+ */
+export const sendVerificationEmail = async ({ email, username, code }) => {
+  if (!isConfigured()) {
+    throw new Error(
+      "Cannot send verification email: RESEND_API_KEY is not configured",
+    );
+  }
+
+  const emailFrom =
+    process.env.EMAIL_FROM || "Aura Beauty <onboarding@resend.dev>";
+
+  const subject = "Confirmá tu email - Aura Beauty";
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+      <h2>¡Hola, ${escapeHtml(username)}!</h2>
+      <p>Usá este código para confirmar tu email y activar tu cuenta:</p>
+      <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">
+        ${escapeHtml(code)}
+      </p>
+      <p>El código vence en 15 minutos. Si vos no creaste esta cuenta, podés ignorar este email.</p>
+    </div>
+  `;
+
+  const text = [
+    `Hola, ${username}!`,
+    `Tu código de confirmación es: ${code}`,
+    "Vence en 15 minutos.",
+    "Si vos no creaste esta cuenta, podés ignorar este email.",
+  ].join("\n");
+
+  await sendEmail({ to: [email], subject, html, text, from: emailFrom });
+};
+
+async function sendEmail({ to, subject, html, text, from }) {
+  const emailFrom = from || process.env.EMAIL_FROM || "Aura Beauty <onboarding@resend.dev>";
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), EMAIL_TIMEOUT_MS);
 
@@ -72,22 +139,14 @@ export const sendAdminPurchaseEmail = async (order) => {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: emailFrom,
-        to: [process.env.ADMIN_NOTIFICATION_EMAIL],
-        subject,
-        html,
-        text,
-      }),
+      body: JSON.stringify({ from: emailFrom, to, subject, html, text }),
     });
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(
-        `Admin email notification failed: ${response.status} ${body}`,
-      );
+      throw new Error(`Email send failed: ${response.status} ${body}`);
     }
   } finally {
     clearTimeout(timeoutId);
   }
-};
+}

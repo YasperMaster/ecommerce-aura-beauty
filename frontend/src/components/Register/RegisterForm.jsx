@@ -9,7 +9,7 @@ import { getInputStateClassName } from "../../utils/formHelpers";
 const RegisterForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { register: registerUser } = useUser();
+  const { register: registerUser, verifyEmail, resendCode } = useUser();
   const {
     register,
     handleSubmit,
@@ -19,6 +19,10 @@ const RegisterForm = () => {
   } = useForm({ mode: "onChange" });
 
   const [showPassword, setShowPassword] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState(null); // set once step 1 succeeds
+  const [code, setCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const usernameValue = watch("username", "");
   const emailValue = watch("email", "");
   const passwordValue = watch("password", "");
@@ -31,12 +35,80 @@ const RegisterForm = () => {
     try {
       const response = await registerUser(data);
       toast.success(response.message);
+      setPendingEmail(response.email);
       reset();
-      navigate(redirectTo);
     } catch (error) {
       toast.error(error.message);
     }
   };
+
+  const onVerifyCode = async (event) => {
+    event.preventDefault();
+    setIsVerifying(true);
+    try {
+      const response = await verifyEmail({ email: pendingEmail, code });
+      toast.success(response.message);
+      navigate(redirectTo);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const onResendCode = async () => {
+    setIsResending(true);
+    try {
+      const response = await resendCode(pendingEmail);
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  if (pendingEmail) {
+    return (
+      <form
+        className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+        onSubmit={onVerifyCode}
+      >
+        <p className="text-center text-sm text-base-content/70">
+          Enviamos un código de 6 dígitos a <strong>{pendingEmail}</strong>.
+          Ingresalo para activar tu cuenta.
+        </p>
+
+        <input
+          autoComplete="one-time-code"
+          className="p-3 outline-2 rounded border focus:outline-primary w-full text-center text-2xl tracking-[0.5em]"
+          inputMode="numeric"
+          maxLength={6}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+          pattern="\d{6}"
+          placeholder="000000"
+          value={code}
+        />
+
+        <button
+          className="btn btn-primary mt-2"
+          disabled={isVerifying || code.length !== 6}
+          type="submit"
+        >
+          {isVerifying ? "Confirmando..." : "Confirmar código"}
+        </button>
+
+        <button
+          className="btn btn-ghost btn-sm"
+          disabled={isResending}
+          onClick={onResendCode}
+          type="button"
+        >
+          {isResending ? "Enviando..." : "Reenviar código"}
+        </button>
+      </form>
+    );
+  }
 
   return (
     <form
