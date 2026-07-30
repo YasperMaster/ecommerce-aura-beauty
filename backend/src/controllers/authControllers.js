@@ -1,13 +1,16 @@
 import bcrypt from "bcryptjs";
 import { ZodError } from "zod";
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resendCodeSchema,
+  resetPasswordSchema,
   verifyEmailSchema,
 } from "../schemas/authSchema.js";
 import UserModel from "../models/UserModel.js";
 import PendingUserModel from "../models/PendingUserModel.js";
+import PasswordResetModel from "../models/PasswordResetModel.js";
 import {
   COOKIE_NAME,
   getAuthClearCookieOptions,
@@ -16,7 +19,10 @@ import {
   signAuthToken,
 } from "../utils/auth.js";
 import { createLogger, sanitizeForLog } from "../utils/logger.js";
-import { sendVerificationEmail } from "../utils/emailNotifications.js";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from "../utils/emailNotifications.js";
 import {
   CODE_TTL_MS,
   MAX_VERIFICATION_ATTEMPTS,
@@ -246,6 +252,127 @@ export const resendVerificationCode = async (req, res) => {
     logger.info({ email }, "Verification code resent");
 
     return res.status(200).json(genericResponse);
+  } catch (error) {
+    return handleAuthError(res, error);
+  }
+};
+
+/**
+ * Step 1 of password reset: if the email belongs to a real account, email a
+ * 6-digit code. Response is intentionally identical either way, so this
+ * endpoint can't be used to check which emails are registered.
+ */
+export const forgotPassword = async (req, res) => {
+  const genericResponse = {
+    message:
+      "If that email is registered, we sent a code to reset your password.",
+  };
+
+  try {
+    const parsedData = forgotPasswordSchema.parse(req.body);
+    const email = normalizeEmail(parsedData.email);
+
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      logger.info({ email }, "Forgot password: no account for this email");
+      return res.status(200).json(genericResponse);
+    }
+
+    const code = generateVerificationCode();
+    const codeHash = hashVerificationCode(code);
+    const expiresAt = new Date(Date.now() + CODE_TTL_MS);
+
+    // Upsert: a repeated forgot-password request just overwrites the
+    // previous pending reset with a fresh code, same as the register flow.
+    await PasswordResetModel.findOneAndUpdate(
+      { email },
+      { email, codeHash, attempts: 0, expiresAt },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+
+    await sendPasswordResetEmail({ email, username: user.username, code });
+
+    logger.info({ email }, "Password reset code sent");
+
+    return res.status(200).json(genericResponse);
+  } catch (error) {
+    return handleAuthError(res, error);
+  }
+};
+
+/**
+ * Step 2 of password reset: confirm the code and set the new password.
+ * On success this also logs the user in on the current device (fresh
+ * session cookie) — worth knowing: existing sessions on OTHER devices are
+ * NOT invalidated, since this app's JWTs have no server-side revocation
+ * mechanism. If that matters for your threat model, see the note at the
+ * end of this file's accompanying explanation.
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const parsedData = resetPasswordSchema.parse(req.body);
+    const email = normalizeEmail(parsedData.email);
+
+    const pendingReset = await PasswordResetModel.findOne({ email });
+
+    if (!pendingReset) {
+      logger.warn({ email }, "Reset password: no pending reset found");
+      return res.status(400).json({
+        message:
+          "No pending password reset found for this email. Please request a new code.",
+      });
+    }
+
+    if (pendingReset.expiresAt < new Date()) {
+      await PasswordResetModel.deleteOne({ _id: pendingReset._id });
+      logger.warn({ email }, "Reset password: code expired");
+      return res
+        .status(400)
+        .json({ message: "This code has expired. Please request a new one." });
+    }
+
+    if (pendingReset.attempts >= MAX_VERIFICATION_ATTEMPTS) {
+      await PasswordResetModel.deleteOne({ _id: pendingReset._id });
+      logger.warn({ email }, "Reset password: too many attempts, code invalidated");
+      return res.status(429).json({
+        message: "Too many incorrect attempts. Please request a new code.",
+      });
+    }
+
+    const isValidCode = verifyCodeHash(parsedData.code, pendingReset.codeHash);
+
+    if (!isValidCode) {
+      pendingReset.attempts += 1;
+      await pendingReset.save();
+      logger.warn(
+        { email, attempts: pendingReset.attempts },
+        "Reset password: incorrect code",
+      );
+      return res
+        .status(400)
+        .json({ message: "Incorrect code. Please try again." });
+    }
+
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      // Account was deleted between the request and the confirmation.
+      await PasswordResetModel.deleteOne({ _id: pendingReset._id });
+      logger.warn({ email }, "Reset password: account no longer exists");
+      return res.status(400).json({
+        message: "This account no longer exists.",
+      });
+    }
+
+    user.password = await bcrypt.hash(parsedData.newPassword, 10);
+    await user.save();
+
+    await PasswordResetModel.deleteOne({ _id: pendingReset._id });
+
+    logger.info({ userId: user._id, email }, "Password reset successfully");
+
+    return issueSession(res, user, 200, "Password reset successfully.");
   } catch (error) {
     return handleAuthError(res, error);
   }

@@ -106,6 +106,11 @@ const LoginForm = () => {
             {errors.password.message}
           </p>
         )}
+        <p className="text-right text-sm mt-2">
+          <Link className="link link-primary" to="/forgot-password">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
       </div>
 
       <button

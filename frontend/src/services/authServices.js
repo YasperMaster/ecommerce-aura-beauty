@@ -54,6 +54,32 @@ export const resendCodeService = async (email) => {
   }
 };
 
+export const forgotPasswordService = async (email) => {
+  try {
+    const response = await authApi.post("/auth/forgot-password", { email });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo enviar el código."),
+    );
+  }
+};
+
+export const resetPasswordService = async ({ email, code, newPassword }) => {
+  try {
+    const response = await authApi.post("/auth/reset-password", {
+      email,
+      code,
+      newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo restablecer la contraseña."),
+    );
+  }
+};
+
 export const logoutService = async () => {
   try {
     const response = await authApi.post("/auth/logout");

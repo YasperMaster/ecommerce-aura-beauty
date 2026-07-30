@@ -7,6 +7,7 @@ import Cart from "./pages/Cart";
 import CheckoutFailure from "./pages/CheckoutFailure";
 import CheckoutPending from "./pages/CheckoutPending";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -22,6 +23,7 @@ function App() {
             <Route element={<Home />} path="/products" />
             <Route element={<Register />} path="/register" />
             <Route element={<Login />} path="/login" />
+            <Route element={<ForgotPassword />} path="/forgot-password" />
             <Route element={<Cart />} path="/cart" />
             <Route element={<CheckoutSuccess />} path="/checkout/success" />
             <Route element={<CheckoutPending />} path="/checkout/pending" />

@@ -1,16 +1,20 @@
 import express from "express";
 import {
+  forgotPassword,
   loginUser,
   logoutUser,
   profile,
   registerUser,
   resendVerificationCode,
+  resetPassword,
   verifyEmail,
 } from "../controllers/authControllers.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import {
   authLimiter,
+  forgotPasswordLimiter,
   resendCodeLimiter,
+  resetPasswordLimiter,
   verifyCodeLimiter,
 } from "../middleware/rateLimiters.js";
 
@@ -37,6 +41,20 @@ router.post("/verify-email", verifyCodeLimiter, verifyEmail);
  * @access  Public
  */
 router.post("/resend-code", resendCodeLimiter, resendVerificationCode);
+
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    If the email is registered, email a 6-digit password-reset code.
+ * @access  Public
+ */
+router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
+
+/**
+ * @route   POST /api/v1/auth/reset-password
+ * @desc    Confirm the code and set a new password. Logs the user in.
+ * @access  Public
+ */
+router.post("/reset-password", resetPasswordLimiter, resetPassword);
 
 /**
  * @route   POST /api/v1/auth/login

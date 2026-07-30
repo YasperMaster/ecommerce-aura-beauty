@@ -7,11 +7,13 @@ import {
   useState,
 } from "react";
 import {
+  forgotPasswordService,
   getProfileService,
   loginService,
   logoutService,
   registerService,
   resendCodeService,
+  resetPasswordService,
   verifyEmailService,
 } from "../services/authServices";
 
@@ -57,6 +59,18 @@ export const UserContextProvider = ({ children }) => {
     return resendCodeService(email);
   }, []);
 
+  // No session yet — just triggers the reset-code email if the account exists.
+  const forgotPassword = useCallback(async (email) => {
+    return forgotPasswordService(email);
+  }, []);
+
+  // Confirms the code, sets the new password, and logs the user in.
+  const resetPassword = useCallback(async ({ email, code, newPassword }) => {
+    const response = await resetPasswordService({ email, code, newPassword });
+    setUserInfo(response.user);
+    return response;
+  }, []);
+
   const logout = useCallback(async () => {
     const response = await logoutService();
     setUserInfo(null);
@@ -76,6 +90,8 @@ export const UserContextProvider = ({ children }) => {
       register,
       verifyEmail,
       resendCode,
+      forgotPassword,
+      resetPassword,
       logout,
       isAuthenticated: Boolean(userInfo?.id),
     }),
@@ -87,6 +103,8 @@ export const UserContextProvider = ({ children }) => {
       register,
       verifyEmail,
       resendCode,
+      forgotPassword,
+      resetPassword,
       logout,
     ],
   );

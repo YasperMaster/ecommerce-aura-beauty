@@ -72,6 +72,7 @@ const RegisterForm = () => {
     return (
       <form
         className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+        key="verify-email-step"
         onSubmit={onVerifyCode}
       >
         <p className="text-center text-sm text-base-content/70">
@@ -113,6 +114,7 @@ const RegisterForm = () => {
   return (
     <form
       className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+      key="register-details-step"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div>

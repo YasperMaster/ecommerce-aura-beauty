@@ -44,6 +44,28 @@ export const resendCodeLimiter = rateLimit({
   },
 });
 
+export const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Demasiados intentos. Volvé a intentarlo en unos minutos.",
+  },
+});
+
+// Same rationale as verifyCodeLimiter: this is the brute-force target for
+// the 6-digit reset code, so it's stricter than the general authLimiter.
+export const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Demasiados intentos. Volvé a intentarlo en unos minutos.",
+  },
+});
+
 export const webhookLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 60,

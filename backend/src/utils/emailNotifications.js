@@ -125,6 +125,46 @@ export const sendVerificationEmail = async ({ email, username, code }) => {
   await sendEmail({ to: [email], subject, html, text, from: emailFrom });
 };
 
+/**
+ * Sends the 6-digit code used to confirm a "forgot password" request.
+ * Same critical-path behavior as sendVerificationEmail: throws instead of
+ * silently skipping, since a user waiting to reset their password needs to
+ * know immediately if the email couldn't be sent.
+ */
+export const sendPasswordResetEmail = async ({ email, username, code }) => {
+  if (!isConfigured()) {
+    throw new Error(
+      "Cannot send password reset email: RESEND_API_KEY is not configured",
+    );
+  }
+
+  const emailFrom =
+    process.env.EMAIL_FROM || "Aura Beauty <onboarding@resend.dev>";
+
+  const subject = "Restablecé tu contraseña - Aura Beauty";
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
+      <h2>¡Hola, ${escapeHtml(username)}!</h2>
+      <p>Recibimos una solicitud para restablecer tu contraseña. Usá este código para continuar:</p>
+      <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">
+        ${escapeHtml(code)}
+      </p>
+      <p>El código vence en 15 minutos. Si vos no pediste esto, podés ignorar este email — tu contraseña actual seguirá funcionando.</p>
+    </div>
+  `;
+
+  const text = [
+    `Hola, ${username}!`,
+    "Recibimos una solicitud para restablecer tu contraseña.",
+    `Tu código es: ${code}`,
+    "Vence en 15 minutos.",
+    "Si vos no pediste esto, podés ignorar este email.",
+  ].join("\n");
+
+  await sendEmail({ to: [email], subject, html, text, from: emailFrom });
+};
+
 async function sendEmail({ to, subject, html, text, from }) {
   const emailFrom = from || process.env.EMAIL_FROM || "Aura Beauty <onboarding@resend.dev>";
 

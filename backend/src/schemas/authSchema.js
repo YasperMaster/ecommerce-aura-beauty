@@ -23,3 +23,17 @@ export const verifyEmailSchema = z.object({
 export const resendCodeSchema = z.object({
   email: z.string().trim().email().max(254),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email().max(254),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().trim().email().max(254),
+  code: z
+    .string()
+    .trim()
+    .length(6, "El código debe tener 6 dígitos.")
+    .regex(/^\d{6}$/, "El código debe contener solo números."),
+  newPassword: z.string().min(6).max(30),
+});
