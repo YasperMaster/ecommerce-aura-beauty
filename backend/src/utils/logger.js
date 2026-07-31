@@ -47,6 +47,6 @@ export const formatErrorResponse = (error, isDevelopment = false) => {
   }
 
   return {
-    message: "An error occurred. Please try again later.",
+    message: "Ocurrió un error. Volvé a intentarlo más tarde.",
   };
 };

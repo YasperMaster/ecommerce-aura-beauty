@@ -40,7 +40,7 @@ const handleAuthError = (res, error) => {
   if (error instanceof ZodError) {
     logger.warn({ errors: error.flatten() }, "Validation error");
     return res.status(400).json({
-      message: "The provided data is invalid.",
+      message: "Los datos ingresados no son válidos.",
       issues: error.flatten(),
     });
   }
@@ -61,7 +61,7 @@ const handleAuthError = (res, error) => {
 
   // Don't expose internal errors to client
   return res.status(500).json({
-    message: "An authentication error occurred. Please try again later.",
+    message: "Ocurrió un error de autenticación. Volvé a intentarlo más tarde.",
   });
 };
 
@@ -124,7 +124,7 @@ export const registerUser = async (req, res) => {
 
     return res.status(200).json({
       message:
-        "We sent a 6-digit confirmation code to your email. Enter it to activate your account.",
+        "Te enviamos un código de 6 dígitos a tu email. Ingresalo para activar tu cuenta.",
       email,
     });
   } catch (error) {
@@ -147,7 +147,7 @@ export const verifyEmail = async (req, res) => {
       logger.warn({ email }, "Verify: no pending registration found");
       return res.status(400).json({
         message:
-          "No pending registration found for this email. Please register again.",
+          "No hay un registro pendiente para este email. Volvé a registrarte.",
       });
     }
 
@@ -156,14 +156,14 @@ export const verifyEmail = async (req, res) => {
       logger.warn({ email }, "Verify: code expired");
       return res
         .status(400)
-        .json({ message: "This code has expired. Please request a new one." });
+        .json({ message: "El código expiró. Pedí uno nuevo." });
     }
 
     if (pendingUser.attempts >= MAX_VERIFICATION_ATTEMPTS) {
       await PendingUserModel.deleteOne({ _id: pendingUser._id });
       logger.warn({ email }, "Verify: too many attempts, code invalidated");
       return res.status(429).json({
-        message: "Too many incorrect attempts. Please request a new code.",
+        message: "Demasiados intentos incorrectos. Pedí un código nuevo.",
       });
     }
 
@@ -178,7 +178,7 @@ export const verifyEmail = async (req, res) => {
       );
       return res
         .status(400)
-        .json({ message: "Incorrect code. Please try again." });
+        .json({ message: "El código es incorrecto. Volvé a intentarlo." });
     }
 
     // Re-check uniqueness at creation time too — guards against a race
@@ -203,7 +203,7 @@ export const verifyEmail = async (req, res) => {
       res,
       newUser,
       201,
-      "Account confirmed and created successfully.",
+      "Cuenta confirmada y creada con éxito.",
     );
   } catch (error) {
     return handleAuthError(res, error);
@@ -217,7 +217,7 @@ export const verifyEmail = async (req, res) => {
  */
 export const resendVerificationCode = async (req, res) => {
   const genericResponse = {
-    message: "If a pending registration exists, a new code was sent.",
+    message: "Si hay un registro pendiente, se envió un código nuevo.",
   };
 
   try {
@@ -233,7 +233,7 @@ export const resendVerificationCode = async (req, res) => {
     const msSinceLastSend = Date.now() - pendingUser.updatedAt.getTime();
     if (msSinceLastSend < RESEND_COOLDOWN_MS) {
       return res.status(429).json({
-        message: "Please wait a moment before requesting another code.",
+        message: "Esperá un momento antes de pedir otro código.",
       });
     }
 
@@ -265,7 +265,7 @@ export const resendVerificationCode = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   const genericResponse = {
     message:
-      "If that email is registered, we sent a code to reset your password.",
+      "Si ese email está registrado, te enviamos un código para restablecer tu contraseña.",
   };
 
   try {
@@ -320,7 +320,7 @@ export const resetPassword = async (req, res) => {
       logger.warn({ email }, "Reset password: no pending reset found");
       return res.status(400).json({
         message:
-          "No pending password reset found for this email. Please request a new code.",
+          "No hay un restablecimiento pendiente para este email. Pedí un código nuevo.",
       });
     }
 
@@ -329,14 +329,14 @@ export const resetPassword = async (req, res) => {
       logger.warn({ email }, "Reset password: code expired");
       return res
         .status(400)
-        .json({ message: "This code has expired. Please request a new one." });
+        .json({ message: "El código expiró. Pedí uno nuevo." });
     }
 
     if (pendingReset.attempts >= MAX_VERIFICATION_ATTEMPTS) {
       await PasswordResetModel.deleteOne({ _id: pendingReset._id });
       logger.warn({ email }, "Reset password: too many attempts, code invalidated");
       return res.status(429).json({
-        message: "Too many incorrect attempts. Please request a new code.",
+        message: "Demasiados intentos incorrectos. Pedí un código nuevo.",
       });
     }
 
@@ -351,7 +351,7 @@ export const resetPassword = async (req, res) => {
       );
       return res
         .status(400)
-        .json({ message: "Incorrect code. Please try again." });
+        .json({ message: "El código es incorrecto. Volvé a intentarlo." });
     }
 
     const user = await UserModel.findOne({ email });
@@ -361,7 +361,7 @@ export const resetPassword = async (req, res) => {
       await PasswordResetModel.deleteOne({ _id: pendingReset._id });
       logger.warn({ email }, "Reset password: account no longer exists");
       return res.status(400).json({
-        message: "This account no longer exists.",
+        message: "Esta cuenta ya no existe.",
       });
     }
 
@@ -372,7 +372,7 @@ export const resetPassword = async (req, res) => {
 
     logger.info({ userId: user._id, email }, "Password reset successfully");
 
-    return issueSession(res, user, 200, "Password reset successfully.");
+    return issueSession(res, user, 200, "Contraseña restablecida con éxito.");
   } catch (error) {
     return handleAuthError(res, error);
   }
@@ -391,7 +391,7 @@ export const loginUser = async (req, res) => {
       logger.warn({ email }, "Login: user not found");
       return res
         .status(401)
-        .json({ message: "Email or password is incorrect." });
+        .json({ message: "El email o la contraseña son incorrectos." });
     }
 
     const isValidPassword = await bcrypt.compare(
@@ -403,7 +403,7 @@ export const loginUser = async (req, res) => {
       logger.warn({ email }, "Login: invalid password");
       return res
         .status(401)
-        .json({ message: "Email or password is incorrect." });
+        .json({ message: "El email o la contraseña son incorrectos." });
     }
 
     logger.info({ userId: user._id, email }, "Sesión iniciada");

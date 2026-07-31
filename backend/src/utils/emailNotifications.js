@@ -95,7 +95,7 @@ export const sendAdminPurchaseEmail = async (order) => {
 export const sendVerificationEmail = async ({ email, username, code }) => {
   if (!isConfigured()) {
     throw new Error(
-      "Cannot send verification email: RESEND_API_KEY is not configured",
+      "No se pudo enviar el email de verificación: RESEND_API_KEY no está configurado.",
     );
   }
 
@@ -134,7 +134,7 @@ export const sendVerificationEmail = async ({ email, username, code }) => {
 export const sendPasswordResetEmail = async ({ email, username, code }) => {
   if (!isConfigured()) {
     throw new Error(
-      "Cannot send password reset email: RESEND_API_KEY is not configured",
+      "No se pudo enviar el email de restablecimiento: RESEND_API_KEY no está configurado.",
     );
   }
 

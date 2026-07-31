@@ -55,7 +55,7 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator: (items) => items.length > 0,
-        message: "Order must contain at least one item",
+        message: "El pedido debe contener al menos un producto.",
       },
     },
     totalAmount: {

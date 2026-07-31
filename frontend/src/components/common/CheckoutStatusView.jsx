@@ -11,11 +11,11 @@ const POLL_INTERVAL_MS = 8000;
 const MAX_POLLS = 15; // stop after ~2 minutes
 
 const STATUS_LABEL = {
-  approved: "Aprobado",
+  approved: "Completada",
   pending: "Pendiente",
   in_process: "En proceso",
-  rejected: "Rechazado",
-  cancelled: "Cancelado",
+  rejected: "Rechazada",
+  cancelled: "Cancelada",
 };
 
 const STATUS_BADGE_CLASS = {

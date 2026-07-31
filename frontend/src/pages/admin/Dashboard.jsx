@@ -11,6 +11,22 @@ import {
 } from "../../services/productServices";
 import { formatCurrency, formatDateTime } from "../../utils/formatters";
 
+const STATUS_LABEL = {
+  approved: "Completada",
+  pending: "Pendiente",
+  in_process: "En proceso",
+  rejected: "Rechazada",
+  cancelled: "Cancelada",
+};
+
+const STATUS_BADGE_CLASS = {
+  approved: "badge-success",
+  pending: "badge-warning",
+  in_process: "badge-warning",
+  rejected: "badge-error",
+  cancelled: "badge-ghost",
+};
+
 const emptyValues = {
   title: "",
   description: "",
@@ -557,7 +573,9 @@ const Dashboard = () => {
                       </span>
                       <span>
                         Estado:{" "}
-                        <strong className="capitalize">{order.status}</strong>
+                        <strong>
+                          {STATUS_LABEL[order.status] || order.status}
+                        </strong>
                       </span>
                       <span>
                         Fecha:{" "}
@@ -567,14 +585,10 @@ const Dashboard = () => {
                   </div>
                   <span
                     className={`badge badge-lg ${
-                      order.status === "approved"
-                        ? "badge-success"
-                        : order.status === "pending"
-                          ? "badge-warning"
-                          : "badge-ghost"
+                      STATUS_BADGE_CLASS[order.status] || "badge-ghost"
                     }`}
                   >
-                    {order.status}
+                    {STATUS_LABEL[order.status] || order.status}
                   </span>
                 </div>
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">

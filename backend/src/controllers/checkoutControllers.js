@@ -372,10 +372,9 @@ export const createMercadoPagoPreference = async (req, res) => {
       // auto_return: "approved" makes Mercado Pago automatically redirect the
       // buyer back to the success URL when the payment is approved, instead of
       // showing a "return to site" button the user has to click.
-      // The MP API only accepts this when back_urls.success is a public HTTPS
-      // URL — localhost URLs are rejected. So we only set it in production.
-      // In local dev the buyer clicks "return to site" manually.
-      ...(isLocalUrl(successUrl) ? {} : { auto_return: "approved" }),
+      // We always set this so the buyer is redirected back to the website
+      // automatically after completing the payment.
+      auto_return: "approved",
       external_reference: orderId,
       metadata: {
         orderId,
@@ -447,7 +446,7 @@ export const mercadoPagoWebhook = async (req, res) => {
     // Validate signature - will reject in production if no secret
     if (!validateMercadoPagoSignature(req)) {
       logger.warn("Webhook rejected: invalid signature");
-      return res.status(401).json({ error: "Invalid webhook signature." });
+      return res.status(401).json({ error: "La firma del webhook no es válida." });
     }
 
     const notificationType =

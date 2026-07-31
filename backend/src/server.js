@@ -154,7 +154,7 @@ app.use((error, req, res, next) => {
   const statusCode = error.status || error.statusCode || 500;
   const message = isDevelopment
     ? error.message
-    : "An error occurred. Please try again later.";
+    : "Ocurrió un error. Volvé a intentarlo más tarde.";
 
   res.status(statusCode).json({
     message,
@@ -164,7 +164,7 @@ app.use((error, req, res, next) => {
 
 // 404 handler
 app.use((_req, res) => {
-  res.status(404).json({ message: "Endpoint not found" });
+  res.status(404).json({ message: "Ruta no encontrada" });
 });
 
 // ============================================================================

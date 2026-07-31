@@ -55,8 +55,9 @@ const ProductDetail = () => {
 
   const images = useMemo(() => {
     if (!product) return [];
-    if (product.images?.length > 0) return product.images;
-    return product.image ? [product.image] : [];
+    // Combine the main image with any additional images so the first
+    // uploaded image (stored as product.image) is always shown.
+    return [product.image, ...(product.images || [])].filter(Boolean);
   }, [product]);
 
   const handleAddToCart = () => {

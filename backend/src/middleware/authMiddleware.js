@@ -33,7 +33,7 @@ export const requireAdmin = (req, res, next) => {
   if (!req.user?.isAdmin) {
     return res
       .status(403)
-      .json({ message: "No tienes permisos para realizar esta acción." });
+      .json({ message: "No tenés permisos para realizar esta acción." });
   }
 
   return next();
