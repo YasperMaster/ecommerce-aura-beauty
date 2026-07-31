@@ -6,6 +6,8 @@ export default function ImageCarousel({ images = [] }) {
     return <div className="bg-base-200 aspect-[4/3] flex items-center justify-center">No image</div>;
   }
 
+  const hasMultiple = images.length > 1;
+
   function prev() {
     setIndex((i) => (i - 1 + images.length) % images.length);
   }
@@ -16,13 +18,15 @@ export default function ImageCarousel({ images = [] }) {
   return (
     <div>
       <div className="relative aspect-[4/3] bg-base-100 overflow-hidden rounded-lg">
-        <button
-          aria-label="Anterior"
-          onClick={(e) => { e.stopPropagation(); prev(); }}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-sm btn-circle"
-        >
-          {"<"}
-        </button>
+        {hasMultiple && (
+          <button
+            aria-label="Anterior"
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 btn btn-sm btn-circle"
+          >
+            {"<"}
+          </button>
+        )}
 
         <img
           src={images[index]}
@@ -30,16 +34,18 @@ export default function ImageCarousel({ images = [] }) {
           className="w-full h-full object-cover"
         />
 
-        <button
-          aria-label="Siguiente"
-          onClick={(e) => { e.stopPropagation(); next(); }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-sm btn-circle"
-        >
-          {">"}
-        </button>
+        {hasMultiple && (
+          <button
+            aria-label="Siguiente"
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 btn btn-sm btn-circle"
+          >
+            {">"}
+          </button>
+        )}
       </div>
 
-      {images.length > 1 && (
+      {hasMultiple && (
         <div className="mt-2 flex gap-2 overflow-x-auto">
           {images.map((src, i) => (
             <button

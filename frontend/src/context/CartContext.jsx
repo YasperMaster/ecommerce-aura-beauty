@@ -30,7 +30,9 @@ export const CartContextProvider = ({ children }) => {
     saveCart(items, userId);
   }, [items, userId]);
 
-  const addItem = useCallback((product) => {
+  const addItem = useCallback((product, quantity = 1) => {
+    const safeQuantity = Math.max(1, Math.trunc(quantity) || 1);
+
     setItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.id === product._id);
 
@@ -44,7 +46,7 @@ export const CartContextProvider = ({ children }) => {
             price: product.price,
             image: product.image,
             stock: product.stock,
-            quantity: 1,
+            quantity: Math.min(safeQuantity, product.stock),
           },
         ];
       }
@@ -57,7 +59,7 @@ export const CartContextProvider = ({ children }) => {
         return {
           ...item,
           stock: product.stock,
-          quantity: Math.min(item.quantity + 1, product.stock),
+          quantity: Math.min(item.quantity + safeQuantity, product.stock),
         };
       });
     });

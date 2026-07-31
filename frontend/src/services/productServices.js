@@ -11,6 +11,17 @@ export const getProductsService = async () => {
   }
 };
 
+export const getProductByIdService = async (productId) => {
+  try {
+    const response = await publicApi.get(`/products/${productId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo cargar el producto."),
+    );
+  }
+};
+
 export const getAdminProductsService = async () => {
   try {
     const response = await authApi.get("/products/admin");

@@ -13,8 +13,10 @@ const imageValueSchema = z
 export const productSchema = z.object({
   title: z.string().trim().min(3).max(120),
   description: z.string().trim().min(10).max(1200),
+  longDescription: z.string().trim().max(4000).optional().default(""),
   category: z.string().trim().max(60).default(""),
   image: imageValueSchema,
+  images: z.array(imageValueSchema).max(8).optional().default([]),
   price: z.coerce.number().min(0),
   stock: z.coerce.number().int().min(0),
   isActive: z.coerce.boolean().default(true),

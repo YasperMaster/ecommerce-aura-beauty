@@ -14,7 +14,6 @@ import { formatCurrency, formatDateTime } from "../../utils/formatters";
 const emptyValues = {
   title: "",
   description: "",
-  image: "",
   price: "",
   stock: "",
   isActive: true,
@@ -28,6 +27,8 @@ const fileToDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const MAX_TOTAL_IMAGES = 9; // 1 main + up to 8 additional
+
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -35,16 +36,14 @@ const Dashboard = () => {
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
+  const [allImages, setAllImages] = useState([]);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
-    watch,
     formState: { errors },
   } = useForm({ defaultValues: emptyValues });
-
-  const currentImage = watch("image");
 
   const loadProducts = useCallback(async () => {
     try {
@@ -91,10 +90,11 @@ const Dashboard = () => {
 
   const startEditing = (product) => {
     setEditingProductId(product._id);
+    const images = [product.image, ...(product.images || [])];
+    setAllImages(images);
     reset({
       title: product.title,
       description: product.description,
-      image: product.image,
       price: String(product.price),
       stock: String(product.stock),
       isActive: product.isActive,
@@ -104,38 +104,72 @@ const Dashboard = () => {
 
   const stopEditing = () => {
     setEditingProductId(null);
+    setAllImages([]);
+    setImageUrlInput("");
     reset(emptyValues);
   };
 
-  const handleImageUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImagesUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = ""; // allow re-selecting the same file later
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Subí un archivo de imagen válido.");
+    if (files.length === 0) return;
+
+    const invalidFile = files.find((file) => !file.type.startsWith("image/"));
+    if (invalidFile) {
+      toast.error("Subí solamente archivos de imagen.");
+      return;
+    }
+
+    if (allImages.length + files.length > MAX_TOTAL_IMAGES) {
+      toast.error(`Podés cargar hasta ${MAX_TOTAL_IMAGES} imágenes en total.`);
       return;
     }
 
     try {
-      const imageDataUrl = await fileToDataUrl(file);
-      setValue("image", imageDataUrl, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      toast.success("Imagen cargada correctamente.");
+      const dataUrls = await Promise.all(files.map(fileToDataUrl));
+      setAllImages((current) => [...current, ...dataUrls]);
+      toast.success(
+        dataUrls.length > 1
+          ? "Imágenes agregadas correctamente."
+          : "Imagen agregada correctamente.",
+      );
     } catch {
-      toast.error("No se pudo procesar la imagen seleccionada.");
+      toast.error("No se pudieron procesar las imágenes seleccionadas.");
     }
   };
 
+  const handleAddImageUrl = () => {
+    const url = imageUrlInput.trim();
+    if (!url) return;
+
+    if (allImages.length >= MAX_TOTAL_IMAGES) {
+      toast.error(`Podés cargar hasta ${MAX_TOTAL_IMAGES} imágenes en total.`);
+      return;
+    }
+
+    setAllImages((current) => [...current, url]);
+    setImageUrlInput("");
+  };
+
+  const handleRemoveImage = (index) => {
+    setAllImages((current) => current.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (values) => {
+    if (allImages.length === 0) {
+      toast.error("Agregá al menos una imagen para el producto.");
+      return;
+    }
+
     try {
       setSubmitting(true);
 
       const payload = {
         title: values.title,
         description: values.description,
-        image: values.image,
+        image: allImages[0],
+        images: allImages.slice(1),
         price: Number(values.price),
         stock: Number(values.stock),
         isActive: Boolean(values.isActive),
@@ -147,7 +181,7 @@ const Dashboard = () => {
 
       toast.success(response.message);
       stopEditing();
-      await loadProducts(); // only products need refreshing after a product mutation
+      await loadProducts();
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -165,7 +199,7 @@ const Dashboard = () => {
       const response = await deleteProductService(productId);
       toast.success(response.message);
       if (editingProductId === productId) stopEditing();
-      await loadProducts(); // only products need refreshing
+      await loadProducts();
     } catch (error) {
       toast.error(error.message);
     }
@@ -242,39 +276,81 @@ const Dashboard = () => {
               )}
             </div>
 
-            <div className="space-y-3">
+            {/* ── Unified images section ─────────────────── */}
+            <div className="space-y-3 rounded-box border border-base-300 p-4">
               <div>
-                <label className="label" htmlFor="image">
-                  <span className="label-text">Imagen (Pegá una URL o subí un archivo)</span>
-                </label>
-                <input
-                  {...register("image", {
-                    required: "Ingresá una imagen o subí un archivo.",
-                  })}
-                  className="input input-bordered w-full"
-                  id="image"
-                  placeholder="https://..."
-                  type="text"
-                />
-                {errors.image && (
-                  <p className="mt-2 text-sm text-error">
-                    {errors.image.message}
-                  </p>
-                )}
+                <span className="label-text font-medium">
+                  Imágenes del producto
+                </span>
+                <p className="text-xs text-base-content/60">
+                  Podés subir hasta {MAX_TOTAL_IMAGES} imágenes en total.
+                </p>
               </div>
-              <input
-                accept="image/*"
-                className="file-input file-input-bordered w-full"
-                onChange={handleImageUpload}
-                type="file"
-              />
-              {currentImage && (
-                <img
-                  alt="Vista previa"
-                  className="h-32 w-32 rounded-2xl object-cover shadow"
-                  src={currentImage}
-                />
+
+              {allImages.length > 0 && (
+                <div className="flex flex-wrap gap-3">
+                  {allImages.map((src, index) => (
+                    <div className="relative" key={`${src}-${index}`}>
+                      <img
+                        alt={`Imagen ${index + 1}`}
+                        className="h-20 w-20 rounded-xl object-cover shadow"
+                        src={src}
+                      />
+                      {index === 0 && (
+                        <span className="badge badge-primary badge-xs absolute -bottom-2 -left-2">
+                          Principal
+                        </span>
+                      )}
+                      <button
+                        aria-label="Quitar imagen"
+                        className="btn btn-circle btn-error btn-xs absolute -right-2 -top-2"
+                        onClick={() => handleRemoveImage(index)}
+                        type="button"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
+
+              {/* Custom file input with Spanish labels */}
+              <div className="flex items-center gap-3">
+                <input
+                  accept="image/*"
+                  className="hidden"
+                  disabled={allImages.length >= MAX_TOTAL_IMAGES}
+                  id="image-upload"
+                  multiple
+                  onChange={handleImagesUpload}
+                  type="file"
+                />
+                <label
+                  className={`btn btn-outline ${allImages.length >= MAX_TOTAL_IMAGES ? "btn-disabled" : ""}`}
+                  htmlFor="image-upload"
+                >
+                  Seleccionar imágenes
+                </label>
+                <span className="text-sm text-base-content/60">
+                  {allImages.length > 0
+                    ? `${allImages.length} imágenes cargadas`
+                    : "Ninguna imagen seleccionada"}
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-outline"
+                  disabled={
+                    !imageUrlInput.trim() ||
+                    allImages.length >= MAX_TOTAL_IMAGES
+                  }
+                  onClick={handleAddImageUrl}
+                  type="button"
+                >
+                  Agregar
+                </button>
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -378,11 +454,19 @@ const Dashboard = () => {
                   key={product._id}
                 >
                   <div className="flex flex-col gap-4 md:flex-row">
-                    <img
-                      alt={product.title}
-                      className="h-32 w-full rounded-2xl object-cover md:w-40"
-                      src={product.image}
-                    />
+                    <div className="flex flex-col items-start gap-2 md:w-40">
+                      <img
+                        alt={product.title}
+                        className="h-32 w-full rounded-2xl object-cover"
+                        src={product.image}
+                      />
+                      {product.images?.length > 0 && (
+                        <span className="badge badge-neutral badge-sm">
+                          +{product.images.length} foto
+                          {product.images.length > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex-1 space-y-3">
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div>

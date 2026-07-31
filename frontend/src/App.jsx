@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router";
 import AdminRoute from "./components/common/AdminRoute.jsx";
 import PrivateRoute from "./components/common/PrivateRoute.jsx";
 import { CartContextProvider } from "./context/CartContext.jsx";

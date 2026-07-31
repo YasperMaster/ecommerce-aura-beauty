@@ -1,109 +1,185 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router";
-import { formatCurrency } from "../utils/formatters";
-import { useCart } from "../context/CartContext";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { Link, useNavigate, useParams } from "react-router";
+import PageLoader from "../components/common/PageLoader";
 import ImageCarousel from "../components/products/ImageCarousel";
+import { useCart } from "../context/CartContext";
+import { useUser } from "../context/UserContext";
+import { getProductByIdService } from "../services/productServices";
+import { formatCurrency } from "../utils/formatters";
 
-export default function ProductDetail() {
+const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addItem, getItemQuantity } = useCart();
+  const { isAuthenticated } = useUser();
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { addItem } = useCart();
+  const [error, setError] = useState(null);
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
-    let mounted = true;
-    async function fetchProduct() {
+    let isMounted = true;
+
+    const loadProduct = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        const res = await fetch(`/api/v1/products/${id}`);
-        if (!res.ok) {
-          setProduct(null);
-          setLoading(false);
-          return;
+        const data = await getProductByIdService(id);
+        if (isMounted) {
+          setProduct(data);
+          setQty(1);
         }
-        const data = await res.json();
-        if (!mounted) return;
-        setProduct(data);
       } catch (err) {
-        console.error(err);
-        setProduct(null);
+        if (isMounted) setError(err.message);
       } finally {
-        if (mounted) setLoading(false);
+        if (isMounted) setLoading(false);
       }
-    }
-    fetchProduct();
+    };
+
+    loadProduct();
+
     return () => {
-      mounted = false;
+      isMounted = false;
     };
   }, [id]);
 
-  if (loading) return <div className="p-6">Cargando...</div>;
-  if (!product) return <div className="p-6">Producto no encontrado</div>;
+  // Same source of truth ProductCard uses: don't let someone add more than
+  // is actually left once whatever's already in their cart is accounted for.
+  const reservedQuantity = product ? getItemQuantity(product._id) : 0;
+  const availableStock = product
+    ? Math.max(product.stock - reservedQuantity, 0)
+    : 0;
 
-  const images =
-    product.images && product.images.length > 0
-      ? product.images
-      : product.image
-      ? [product.image]
-      : [];
+  const images = useMemo(() => {
+    if (!product) return [];
+    if (product.images?.length > 0) return product.images;
+    return product.image ? [product.image] : [];
+  }, [product]);
 
-  const availableStock = product.stock ?? 0;
+  const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      toast.error("Iniciá sesión para agregar productos al carrito.");
+      navigate("/login", { state: { redirectTo: `/product/${id}` } });
+      return;
+    }
 
-  function handleAddToCart() {
-    if (availableStock <= 0) return;
-    addItem({
-      ...product,
-      quantity: qty,
-    });
+    if (availableStock <= 0) {
+      toast.error("No hay más stock disponible para este producto.");
+      return;
+    }
+
+    addItem(product, qty);
+    toast.success(`${product.title} agregado al carrito.`);
+  };
+
+  if (loading) {
+    return <PageLoader message="Cargando producto..." />;
+  }
+
+  if (error || !product) {
+    return (
+      <div className="mx-auto max-w-[600px] px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold">
+          {error || "Producto no encontrado"}
+        </h1>
+        <p className="mt-2 text-sm text-base-content/70">
+          Puede que el producto ya no esté disponible.
+        </p>
+        <Link className="btn btn-primary mt-6" to="/products">
+          Volver a productos
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="mx-auto max-w-[1100px] px-4 py-8">
+      <Link
+        className="link link-primary text-sm"
+        to="/products"
+      >
+        ← Volver a productos
+      </Link>
+
+      <div className="mt-4 grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_1fr]">
+        {/* The photo is the star here — it gets the wider column and the
+            carousel is keyed by product id so switching between products
+            never leaves the slide index pointing at a stale, out-of-range
+            image from the previous product. */}
         <div>
-          <ImageCarousel images={images} />
+          <ImageCarousel images={images} key={product._id} />
         </div>
 
-        <div>
-          <h1 className="text-2xl font-bold mb-2">{product.title}</h1>
-          <p className="text-lg text-primary mb-4">{formatCurrency(product.price)}</p>
-          <p className="mb-4 text-sm text-base-content/70">
+        <div className="flex flex-col">
+          {product.category && (
+            <span className="badge badge-ghost mb-2 w-fit">
+              {product.category}
+            </span>
+          )}
+          <h1 className="text-3xl font-bold">{product.title}</h1>
+          <p className="mt-2 text-2xl font-bold text-primary">
+            {formatCurrency(product.price)}
+          </p>
+
+          <p className="mt-4 whitespace-pre-line text-base-content/80">
             {product.longDescription || product.description}
           </p>
 
-          <p className="mb-4">
-            <strong>Stock:</strong> {availableStock > 0 ? availableStock : "Sin stock"}
+          <p className="mt-4 text-sm">
+            {availableStock > 0 ? (
+              <span className="text-base-content/70">
+                Stock disponible: <strong>{availableStock}</strong>
+              </span>
+            ) : (
+              <span className="font-semibold text-error">Sin stock</span>
+            )}
           </p>
 
-          <div className="flex items-center gap-3 mb-4">
-            <label className="flex items-center gap-2">
-              Cantidad:
+          <div className="mt-6 flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm" htmlFor="qty">
+              Cantidad
               <input
-                type="number"
+                className="input input-bordered input-no-spinner w-20"
+                disabled={availableStock <= 0}
+                id="qty"
+                inputMode="numeric"
+                max={availableStock || 1}
                 min="1"
-                max={availableStock}
+                onChange={(e) => {
+                  const parsed = Number(e.target.value);
+                  const clamped = Math.min(
+                    Math.max(parsed || 1, 1),
+                    availableStock || 1,
+                  );
+                  setQty(clamped);
+                }}
+                type="number"
                 value={qty}
-                onChange={(e) =>
-                  setQty(Math.max(1, Math.min(availableStock, Number(e.target.value || 1))))
-                }
-                className="input input-bordered w-24"
               />
             </label>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              className="btn btn-primary"
-              onClick={handleAddToCart}
-              disabled={availableStock <= 0}
-              type="button"
-            >
-              Agregar al carrito
-            </button>
-          </div>
+          <button
+            className="btn btn-primary btn-lg mt-6 w-full sm:w-fit"
+            disabled={availableStock <= 0}
+            onClick={handleAddToCart}
+            type="button"
+          >
+            {availableStock <= 0 ? "Sin stock" : "Agregar al carrito"}
+          </button>
+
+          {reservedQuantity > 0 && (
+            <p className="mt-2 text-xs text-base-content/60">
+              Ya tenés {reservedQuantity} en tu carrito.
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default ProductDetail;
