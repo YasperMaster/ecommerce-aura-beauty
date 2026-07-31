@@ -406,9 +406,9 @@ export const loginUser = async (req, res) => {
         .json({ message: "Email or password is incorrect." });
     }
 
-    logger.info({ userId: user._id, email }, "Login successful");
+    logger.info({ userId: user._id, email }, "Sesión iniciada");
 
-    return issueSession(res, user, 200, "Login successful.");
+    return issueSession(res, user, 200, "Sesión iniciada.");
   } catch (error) {
     return handleAuthError(res, error);
   }
@@ -419,7 +419,7 @@ export const logoutUser = async (_req, res) => {
   return res
     .clearCookie(COOKIE_NAME, getAuthClearCookieOptions())
     .status(200)
-    .json({ message: "Logout successful." });
+    .json({ message: "Sesión cerrada." });
 };
 
 export const profile = async (req, res) => {
