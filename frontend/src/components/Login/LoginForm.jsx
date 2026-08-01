@@ -43,6 +43,9 @@ const LoginForm = () => {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div>
+        <label className="label" htmlFor="login-email">
+          <span className="label-text">Correo electrónico</span>
+        </label>
         <input
           {...register("email", {
             required: "Ingresá un correo electrónico.",
@@ -56,10 +59,11 @@ const LoginForm = () => {
             },
           })}
           autoComplete="email"
-          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+          className={`input input-bordered w-full ${getInputStateClassName(
             Boolean(emailValue && !errors.email),
             Boolean(errors.email),
           )}`}
+          id="login-email"
           placeholder="Correo electrónico"
           type="email"
         />
@@ -71,6 +75,9 @@ const LoginForm = () => {
       </div>
 
       <div className="relative">
+        <label className="label" htmlFor="login-password">
+          <span className="label-text">Contraseña</span>
+        </label>
         <input
           {...register("password", {
             required: "Ingresá una contraseña.",
@@ -84,10 +91,11 @@ const LoginForm = () => {
             },
           })}
           autoComplete="current-password"
-          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+          className={`input input-bordered w-full pr-12 ${getInputStateClassName(
             Boolean(passwordValue && !errors.password),
             Boolean(errors.password),
           )}`}
+          id="login-password"
           placeholder="Contraseña"
           type={showPassword ? "text" : "password"}
         />
@@ -95,7 +103,7 @@ const LoginForm = () => {
           aria-label={
             showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
           }
-          className="cursor-pointer absolute right-4 top-[20px] transform -translate-y-1/2 text-gray-600"
+          className="cursor-pointer absolute right-4 top-[52px] transform -translate-y-1/2 text-gray-600"
           onClick={() => setShowPassword((prev) => !prev)}
           type="button"
         >

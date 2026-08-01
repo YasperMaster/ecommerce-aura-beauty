@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import MyPurchases from "./pages/MyPurchases.jsx";
+import NotFound from "./pages/NotFound.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
@@ -38,6 +39,7 @@ function App() {
             <Route element={<PrivateRoute />}>
               <Route element={<MyPurchases />} path="/mis-compras" />
             </Route>
+            <Route element={<NotFound />} path="*" />
           </Route>
         </Routes>
       </CartContextProvider>

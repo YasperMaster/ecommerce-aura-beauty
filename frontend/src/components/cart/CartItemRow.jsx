@@ -18,16 +18,18 @@ const CartItemRow = ({ item, onDecrease, onIncrease, onRemove }) => {
 
       <div className="flex items-center gap-2">
         <button
+          aria-label={`Quitar una unidad de ${item.title}`}
           className="btn btn-outline btn-sm"
           onClick={onDecrease}
           type="button"
         >
           -
         </button>
-        <span className="min-w-8 text-center font-semibold">
+        <span aria-live="polite" className="min-w-8 text-center font-semibold">
           {item.quantity}
         </span>
         <button
+          aria-label={`Agregar una unidad de ${item.title}`}
           className="btn btn-outline btn-sm"
           onClick={onIncrease}
           type="button"
@@ -46,6 +48,7 @@ const CartItemRow = ({ item, onDecrease, onIncrease, onRemove }) => {
       </div>
 
       <button
+        aria-label={`Eliminar ${item.title} del carrito`}
         className="btn btn-ghost text-error"
         onClick={onRemove}
         type="button"

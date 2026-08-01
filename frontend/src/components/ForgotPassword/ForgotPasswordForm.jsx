@@ -83,6 +83,9 @@ const ForgotPasswordForm = () => {
         </p>
 
         <div>
+          <label className="label" htmlFor="reset-code">
+            <span className="label-text">Código de verificación</span>
+          </label>
           <input
             {...resetForm.register("code", {
               required: "Ingresá el código.",
@@ -92,7 +95,8 @@ const ForgotPasswordForm = () => {
               },
             })}
             autoComplete="one-time-code"
-            className="p-3 outline-2 rounded border focus:outline-primary w-full text-center text-2xl tracking-[0.5em]"
+            className="input input-bordered w-full text-center text-2xl tracking-[0.5em]"
+            id="reset-code"
             inputMode="numeric"
             maxLength={6}
             placeholder="000000"
@@ -105,6 +109,9 @@ const ForgotPasswordForm = () => {
         </div>
 
         <div className="relative">
+          <label className="label" htmlFor="reset-password">
+            <span className="label-text">Nueva contraseña</span>
+          </label>
           <input
             {...resetForm.register("newPassword", {
               required: "Ingresá tu nueva contraseña.",
@@ -118,10 +125,11 @@ const ForgotPasswordForm = () => {
               },
             })}
             autoComplete="new-password"
-            className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+            className={`input input-bordered w-full pr-12 ${getInputStateClassName(
               Boolean(newPasswordValue && !resetForm.formState.errors.newPassword),
               Boolean(resetForm.formState.errors.newPassword),
             )}`}
+            id="reset-password"
             placeholder="Nueva contraseña"
             type={showPassword ? "text" : "password"}
           />
@@ -129,7 +137,7 @@ const ForgotPasswordForm = () => {
             aria-label={
               showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
             }
-            className="cursor-pointer absolute right-4 top-[20px] transform -translate-y-1/2 text-gray-600"
+            className="cursor-pointer absolute right-4 top-[52px] transform -translate-y-1/2 text-gray-600"
             onClick={() => setShowPassword((prev) => !prev)}
             type="button"
           >
@@ -175,6 +183,9 @@ const ForgotPasswordForm = () => {
       </p>
 
       <div>
+        <label className="label" htmlFor="forgot-email">
+          <span className="label-text">Correo electrónico</span>
+        </label>
         <input
           {...emailForm.register("email", {
             required: "Ingresá un correo electrónico.",
@@ -188,10 +199,11 @@ const ForgotPasswordForm = () => {
             },
           })}
           autoComplete="email"
-          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+          className={`input input-bordered w-full ${getInputStateClassName(
             Boolean(emailForm.watch("email") && !emailForm.formState.errors.email),
             Boolean(emailForm.formState.errors.email),
           )}`}
+          id="forgot-email"
           placeholder="Correo electrónico"
           type="email"
         />

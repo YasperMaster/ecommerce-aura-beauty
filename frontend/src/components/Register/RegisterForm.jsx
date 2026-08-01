@@ -118,6 +118,9 @@ const RegisterForm = () => {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div>
+        <label className="label" htmlFor="register-username">
+          <span className="label-text">Nombre de usuario</span>
+        </label>
         <input
           {...register("username", {
             required: "Ingresá un nombre de usuario.",
@@ -132,10 +135,11 @@ const RegisterForm = () => {
             },
           })}
           autoComplete="username"
-          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+          className={`input input-bordered w-full ${getInputStateClassName(
             Boolean(usernameValue && !errors.username),
             Boolean(errors.username),
           )}`}
+          id="register-username"
           placeholder="Nombre de usuario"
           type="text"
         />
@@ -147,6 +151,9 @@ const RegisterForm = () => {
       </div>
 
       <div>
+        <label className="label" htmlFor="register-email">
+          <span className="label-text">Correo electrónico</span>
+        </label>
         <input
           {...register("email", {
             required: "Ingresá un correo electrónico.",
@@ -160,10 +167,11 @@ const RegisterForm = () => {
             },
           })}
           autoComplete="email"
-          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+          className={`input input-bordered w-full ${getInputStateClassName(
             Boolean(emailValue && !errors.email),
             Boolean(errors.email),
           )}`}
+          id="register-email"
           placeholder="Correo electrónico"
           type="email"
         />
@@ -175,6 +183,9 @@ const RegisterForm = () => {
       </div>
 
       <div className="relative">
+        <label className="label" htmlFor="register-password">
+          <span className="label-text">Contraseña</span>
+        </label>
         <input
           {...register("password", {
             required: "Ingresá una contraseña.",
@@ -188,10 +199,11 @@ const RegisterForm = () => {
             },
           })}
           autoComplete="new-password"
-          className={`p-3 outline-2 rounded border focus:outline-primary w-full ${getInputStateClassName(
+          className={`input input-bordered w-full pr-12 ${getInputStateClassName(
             Boolean(passwordValue && !errors.password),
             Boolean(errors.password),
           )}`}
+          id="register-password"
           placeholder="Contraseña"
           type={showPassword ? "text" : "password"}
         />
@@ -199,7 +211,7 @@ const RegisterForm = () => {
           aria-label={
             showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
           }
-          className="cursor-pointer absolute right-4 top-[20px] transform -translate-y-1/2 text-gray-600"
+          className="cursor-pointer absolute right-4 top-[52px] transform -translate-y-1/2 text-gray-600"
           onClick={() => setShowPassword((prev) => !prev)}
           type="button"
         >

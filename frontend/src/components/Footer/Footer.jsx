@@ -9,6 +9,7 @@ const Footer = () => {
         </p>
         <div className="flex flex-wrap items-center gap-4">
           <a
+            aria-label="Instagram de Aura Beauty (@aura_beauty2625)"
             className="inline-flex items-center gap-2 transition hover:text-primary"
             href="https://instagram.com/aura_beauty2625"
             rel="noreferrer"
@@ -17,6 +18,7 @@ const Footer = () => {
             <FaInstagram /> @aura_beauty2625
           </a>
           <a
+            aria-label="WhatsApp de Aura Beauty (+54 346 459-4165)"
             className="inline-flex items-center gap-2 transition hover:text-primary"
             href="https://wa.me/543464594165"
             rel="noreferrer"

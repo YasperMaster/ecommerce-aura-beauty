@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useCart } from "../../context/CartContext";
 import { useUser } from "../../context/UserContext";
 import { formatCurrency } from "../../utils/formatters";
@@ -32,26 +32,15 @@ const ProductCard = ({ product }) => {
     toast.success(`${product.title} agregado al carrito.`);
   };
 
-  const handleNavigateToProduct = () => {
-    navigate(`/product/${product._id}`);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleNavigateToProduct();
-    }
-  };
+  const productUrl = `/product/${product._id}`;
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleNavigateToProduct}
-      onKeyDown={handleKeyDown}
-      className="product-card-link w-full h-full"
-    >
-      <article className="card h-full bg-base-100 shadow-xl transition-transform duration-200 hover:-translate-y-1">
+    <article className="card h-full bg-base-100 shadow-xl transition-transform duration-200 hover:-translate-y-1">
+      <Link
+        aria-label={`Ver detalles de ${product.title}`}
+        className="product-card-link block h-full"
+        to={productUrl}
+      >
         <figure className="aspect-[4/3] overflow-hidden">
           <img
             alt={product.title}
@@ -71,21 +60,20 @@ const ProductCard = ({ product }) => {
             <span className="text-sm text-base-content/60">
               {availableStock > 0 ? `${availableStock} disponibles` : "Sin stock"}
             </span>
-            <button
-              className="btn btn-primary"
-              disabled={availableStock === 0}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddToCart(e);
-              }}
-              type="button"
-            >
-              Agregar
-            </button>
           </div>
         </div>
-      </article>
-    </div>
+      </Link>
+      <div className="card-actions justify-end px-4 pb-4">
+        <button
+          className="btn btn-primary"
+          disabled={availableStock === 0}
+          onClick={handleAddToCart}
+          type="button"
+        >
+          Agregar
+        </button>
+      </div>
+    </article>
   );
 };
 
