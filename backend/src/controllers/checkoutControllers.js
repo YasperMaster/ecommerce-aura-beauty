@@ -484,6 +484,21 @@ export const mercadoPagoWebhook = async (req, res) => {
     const previousStatus = order.status;
     const nextStatus = PAYMENT_STATUS_MAP[paymentData.status] || "pending";
 
+    // Idempotency: if the order is already in the target status and the
+    // payment ID matches, skip processing. This prevents duplicate stock
+    // decrements and duplicate admin emails when Mercado Pago retries the
+    // same webhook notification (which it does routinely).
+    if (
+      previousStatus === nextStatus &&
+      order.mercadoPago.paymentId === (paymentData.id || null)
+    ) {
+      logger.info(
+        { orderId, status: nextStatus, paymentId },
+        "Webhook: duplicate notification, already processed (idempotent skip)",
+      );
+      return res.status(200).json({ received: true });
+    }
+
     order.status = nextStatus;
     order.mercadoPago.paymentId = paymentData.id || null;
     order.mercadoPago.status = paymentData.status || "";

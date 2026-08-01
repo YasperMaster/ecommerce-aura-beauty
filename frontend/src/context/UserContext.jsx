@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { fetchCsrfToken } from "../services/api";
 import {
   forgotPasswordService,
   getProfileService,
@@ -78,6 +79,10 @@ export const UserContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Fetch CSRF token on app startup so it's available for all
+    // state-changing requests (POST/PUT/DELETE). This runs in parallel
+    // with the session check to avoid adding latency.
+    fetchCsrfToken();
     checkSession();
   }, [checkSession]);
 

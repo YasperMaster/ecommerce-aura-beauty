@@ -9,6 +9,7 @@ import { connectDB, disconnectDB } from "./config/conifgdb.js";
 import { seedProducts } from "./config/seedProducts.js";
 import { validateEnvironment } from "./config/validateEnv.js";
 import { logger } from "./utils/logger.js";
+import { csrfMiddleware, getCsrfToken } from "./middleware/csrfProtection.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
@@ -28,15 +29,25 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 // ============================================================================
 
 // 1. Helmet: Add security headers
+// CSP: 'unsafe-inline' is removed from styleSrc. The frontend uses Tailwind
+// CSS (external stylesheets), so inline styles are not needed. If any
+// component uses inline styles, they should be moved to CSS classes.
+// connectSrc only includes the Mercado Pago API URL if it is non-empty.
+const mercadoPagoApiUrl = process.env.MERCADO_PAGO_API || "";
+const connectSrc = ["'self'"];
+if (mercadoPagoApiUrl) {
+  connectSrc.push(mercadoPagoApiUrl);
+}
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'"],
         imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", process.env.MERCADO_PAGO_API || ""],
+        connectSrc,
         frameSrc: ["'self'", "https://www.mercadopago.com"],
       },
     },
@@ -129,12 +140,22 @@ app.get("/api/health", (_req, res) => {
 });
 
 // ============================================================================
+// CSRF TOKEN ENDPOINT
+// ============================================================================
+// The frontend calls this on startup to get a CSRF token, which it then
+// includes in the X-CSRF-Token header on all state-changing requests.
+app.get("/api/v1/csrf-token", getCsrfToken);
+
+// ============================================================================
 // API ROUTES (V1)
 // ============================================================================
-
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/products", productRoutes);
-app.use("/api/v1/checkout", checkoutRoutes);
+// CSRF protection is applied to all routes. The webhook endpoint is
+// excluded from CSRF within the checkout routes file itself, since
+// Mercado Pago cannot send a CSRF token — it's authenticated via HMAC
+// signature validation instead.
+app.use("/api/v1/auth", csrfMiddleware, authRoutes);
+app.use("/api/v1/products", csrfMiddleware, productRoutes);
+app.use("/api/v1/checkout", csrfMiddleware, checkoutRoutes);
 
 // ============================================================================
 // ERROR HANDLING MIDDLEWARE

@@ -32,14 +32,23 @@ export const validateEnvironment = () => {
       required: true,
       message: "FRONTEND_URL is required for CORS configuration",
     },
+    BACKEND_URL: {
+      required: true,
+      message: "BACKEND_URL is required for webhook notifications and payment returns",
+    },
   };
 
-  // In production, webhook secret is mandatory
+  // In production, webhook secret and CSRF secret are mandatory
   if (process.env.NODE_ENV === "production") {
     requiredVars.MERCADOPAGO_WEBHOOK_SECRET = {
       required: true,
       message:
         "MERCADOPAGO_WEBHOOK_SECRET is required in production for webhook verification",
+    };
+    requiredVars.CSRF_SECRET = {
+      required: true,
+      message:
+        "CSRF_SECRET is required in production for CSRF protection",
     };
   }
 

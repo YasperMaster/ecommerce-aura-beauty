@@ -207,22 +207,10 @@ const ForgotPasswordForm = () => {
           placeholder="Correo electrónico"
           type="email"
         />
-        {emailForm.formState.errors.email && (
-          <p className="text-red-500 text-sm mt-2 ml-1">
-            {emailForm.formState.errors.email.message}
-          </p>
-        )}
-      </div>
-
-      <button className="btn btn-primary mt-2" disabled={isRequesting} type="submit">
-        {isRequesting ? "Enviando..." : "Enviar código"}
-      </button>
-
-      <p className="text-center text-sm text-base-content/70">
         <Link className="link link-primary" to="/login">
           Volver a iniciar sesión
         </Link>
-      </p>
+      </div>
     </form>
   );
 };

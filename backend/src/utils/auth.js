@@ -20,7 +20,12 @@ export const getAuthCookieOptions = () => {
     return {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "none" : "lax",
+        // "lax" prevents CSRF on cross-site POST/PUT/DELETE requests while
+        // still allowing the cookie to be sent on top-level navigations
+        // (e.g. when the user clicks a link back to the site from MP).
+        // "none" would require Secure + would expose the cookie to any
+        // cross-site request, creating a CSRF vector.
+        sameSite: "lax",
         maxAge: ONE_HOUR_IN_MS,
         path: "/",
     }

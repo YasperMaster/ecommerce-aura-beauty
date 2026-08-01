@@ -22,6 +22,59 @@ export const authApi = axios.create({
   withCredentials: true,
 });
 
+// ============================================================================
+// CSRF Token Management
+// ============================================================================
+// The backend uses double-submit cookie CSRF protection. On app startup,
+// we fetch a CSRF token from the backend which sets a `csrf-token` cookie.
+// We then read that cookie and include the token in the `X-CSRF-Token`
+// header on all state-changing (POST/PUT/PATCH/DELETE) requests.
+
+let csrfToken = null;
+
+/**
+ * Reads a cookie value by name from document.cookie.
+ * @param {string} name - The cookie name to look up.
+ * @returns {string|null} The cookie value, or null if not found.
+ */
+const getCookie = (name) => {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${name}=([^;]*)`),
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+/**
+ * Fetches the CSRF token from the backend and stores it in memory.
+ * The backend also sets a `csrf-token` cookie which we read back.
+ * Should be called once on app startup (e.g. in UserContext).
+ */
+export const fetchCsrfToken = async () => {
+  try {
+    await authApi.get("/csrf-token");
+    csrfToken = getCookie("csrf-token");
+  } catch {
+    // Non-fatal: CSRF protection may not be enabled (e.g. dev mode)
+    csrfToken = null;
+  }
+};
+
+/**
+ * Axios request interceptor that attaches the CSRF token to all
+ * state-changing requests (POST, PUT, PATCH, DELETE).
+ */
+const attachCsrfToken = (config) => {
+  const method = (config.method || "get").toLowerCase();
+
+  if (["post", "put", "patch", "delete"].includes(method) && csrfToken) {
+    config.headers["X-CSRF-Token"] = csrfToken;
+  }
+
+  return config;
+};
+
+authApi.interceptors.request.use(attachCsrfToken);
+
 export const getApiErrorMessage = (error, fallbackMessage) => {
   if (error?.code === "ECONNABORTED") {
     return "El servidor tardó demasiado en responder.";
