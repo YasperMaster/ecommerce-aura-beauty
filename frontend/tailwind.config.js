@@ -2,7 +2,11 @@
 export default {
     content: ['./index.html', './src/**/*.{js,ts,jsx,tsx,html}'],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                display: ['"Cormorant Garamond"', 'ui-serif', 'serif'],
+            },
+        },
     },
     plugins: [require('daisyui')],
     daisyui: {

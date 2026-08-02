@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { HiSparkles } from "react-icons/hi2";
 import { Link } from "react-router";
 import { useUser } from "../../context/UserContext";
 import AuthButtons from "./AuthButtons";
 import Cart from "./Cart";
 import UserDropDown from "./UserDropDown";
+
+const OWNER_FULL_NAME = "Pilar Yasparra";
 
 const Navbar = () => {
   const { isAuthenticated, userInfo, loading } = useUser();
@@ -45,15 +48,37 @@ const Navbar = () => {
 
   return (
     <header className={headerClassName}>
-      <div className="relative z-30 mb-3 rounded-box border border-base-300/80 bg-base-100/90 p-3 shadow-sm backdrop-blur">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative z-30 mb-3 overflow-hidden rounded-box border border-base-300/80 bg-base-100/90 px-4 py-3 shadow-sm backdrop-blur sm:px-5">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-primary/10 to-transparent blur-2xl"
+        />
+
+        <div className="relative grid grid-cols-1 items-center gap-3 lg:grid-cols-[1fr_auto_1fr]">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
+            <p className="font-display text-xl italic font-semibold tracking-wide text-base-content sm:text-2xl">
               Aura Beauty
             </p>
-            <p className="text-sm text-base-content/70">Productos cosméticos</p>
+            <p className="text-[11px] uppercase tracking-[0.35em] text-base-content/50">
+              Productos cosméticos
+            </p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-3 self-end lg:self-auto">
+
+          <div className="hidden items-center justify-self-center gap-3 text-base-content/60 lg:flex">
+            <span className="h-px w-10 bg-gradient-to-r from-transparent via-primary/40 to-primary/60" />
+            <span className="flex items-center gap-2 whitespace-nowrap font-display text-sm italic tracking-wide">
+              <HiSparkles className="text-primary/70" size={16} />
+              Un espacio creado por{" "}
+              <span className="font-semibold not-italic text-base-content/80">
+                {OWNER_FULL_NAME}
+              </span>
+              <HiSparkles className="text-primary/70" size={16} />
+            </span>
+
+            <span className="h-px w-10 bg-gradient-to-l from-transparent via-primary/40 to-primary/60" />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-3 justify-self-end">
             {loading ? (
               <span className="loading loading-spinner loading-sm text-primary" />
             ) : isAuthenticated ? (
@@ -73,12 +98,24 @@ const Navbar = () => {
             )}
           </div>
         </div>
+
+        <div className="relative mt-2 flex items-center justify-center gap-2 text-base-content/60 lg:hidden">
+          <span className="h-px w-6 bg-gradient-to-r from-transparent to-primary/50" />
+          <span className="flex items-center gap-1.5 font-display text-xs italic tracking-wide">
+            <HiSparkles className="text-primary/70" size={13} />
+            Creado por{" "}
+            <span className="font-semibold not-italic text-base-content/80">
+              {OWNER_FULL_NAME}
+            </span>
+          </span>
+          <span className="h-px w-6 bg-gradient-to-l from-transparent to-primary/50" />
+        </div>
       </div>
 
       <nav className="relative z-20 navbar rounded-box border border-base-300/80 bg-base-100/90 shadow-sm backdrop-blur">
         <div className="navbar-start">
           <Link
-            className="btn btn-ghost text-xl font-black tracking-wide"
+            className="btn btn-ghost font-display text-2xl italic font-semibold tracking-wide"
             to="/"
           >
             Aura Beauty
