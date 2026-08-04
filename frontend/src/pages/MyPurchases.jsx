@@ -101,26 +101,26 @@ const MyPurchases = () => {
         <p className="text-base-content/80">
           ¿Tenés alguna duda? Contactáte conmigo y te doy una mano
         </p>
-        <div className="mt-4 flex justify-center gap-3">
-          <a
-            aria-label="WhatsApp Aura Beauty"
-            className="btn btn-ghost btn-circle"
-            href="https://wa.me/543464594165"
-            rel="noreferrer"
-            target="_blank"
-          >
-            <FaWhatsapp size={22} />
-          </a>
-          <a
-            aria-label="Instagram Aura Beauty"
-            className="btn btn-ghost btn-circle"
-            href="https://instagram.com/aura_beauty2625"
-            rel="noreferrer"
-            target="_blank"
-          >
-            <FaInstagram size={22} />
-          </a>
-        </div>
+        <div className="flex justify-center items-center gap-4 text-sm text-base-content/70">
+              <a
+                aria-label="Instagram de Aura Beauty (@aura_beauty2625)"
+                className="btn btn-ghost btn-sm gap-2"
+                href="https://instagram.com/aura_beauty2625"
+                rel="noreferrer"
+                target="_blank"
+              >
+                <FaInstagram size={18} /> @aura_beauty2625
+              </a>
+              <a
+                aria-label="WhatsApp de Aura Beauty (+54 346 459-4165)"
+                className="btn btn-ghost btn-sm gap-2"
+                href="https://wa.me/543464594165"
+                rel="noreferrer"
+                target="_blank"
+              >
+                <FaWhatsapp size={18} /> 3464594165
+              </a>
+            </div>
       </div>
     </div>
   );

@@ -48,11 +48,13 @@ const Navbar = () => {
 
   return (
     <header className={headerClassName}>
-      <div className="relative z-30 mb-3 overflow-hidden rounded-box border border-base-300/80 bg-base-100/90 px-4 py-3 shadow-sm backdrop-blur sm:px-5">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-primary/10 to-transparent blur-2xl"
-        />
+      <div className="relative z-30 mb-3 rounded-box border border-base-300/80 bg-base-100/90 px-4 py-3 shadow-sm backdrop-blur sm:px-5">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-box">
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-primary/10 to-transparent blur-2xl"
+          />
+        </div>
 
         <div className="relative grid grid-cols-1 items-center gap-3 lg:grid-cols-[1fr_auto_1fr]">
           <div>

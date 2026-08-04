@@ -35,7 +35,7 @@ const ProductCard = ({ product }) => {
   const productUrl = `/product/${product._id}`;
 
   return (
-    <article className="card h-full bg-base-100 shadow-xl transition-transform duration-200 hover:-translate-y-1">
+    <article className="card h-full overflow-hidden rounded-box border border-base-300/80 bg-base-100/90 shadow-sm backdrop-blur transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
       <Link
         aria-label={`Ver detalles de ${product.title}`}
         className="product-card-link block h-full"

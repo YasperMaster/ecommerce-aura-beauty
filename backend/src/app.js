@@ -7,13 +7,11 @@ import pinoHttp from "pino-http";
 import { validateEnvironment } from "./config/validateEnv.js";
 import { logger } from "./utils/logger.js";
 import { csrfMiddleware, getCsrfToken } from "./middleware/csrfProtection.js";
+import { ensureSessionId } from "./middleware/sessionId.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 
-// process.env must already be populated by the time this module loads:
-// - locally, server.js imports ./loadEnv.js before importing this file
-// - on Vercel, the platform injects env vars before the function cold-starts
 validateEnvironment();
 
 const app = express();
@@ -81,6 +79,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(ensureSessionId);
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 

@@ -39,9 +39,13 @@ const Home = () => {
 
   return (
     <div className="space-y-10 py-10">
-      <section className="hero overflow-hidden rounded-[2rem] bg-gradient-to-r from-primary/15 via-secondary/15 to-accent/10 px-6 py-10 lg:px-10">
-        <div className="hero-content flex-col gap-8 lg:flex-row-reverse">
-          <div className="h-[300px] w-[300px] shrink-0 overflow-hidden rounded-full bg-white shadow-2xl lg:h-[360px] lg:w-[360px]">
+      <section className="relative overflow-hidden rounded-box border border-base-300/80 bg-base-100/90 px-6 py-10 shadow-sm backdrop-blur lg:px-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-primary/10 to-transparent blur-2xl"
+        />
+        <div className="hero-content relative flex-col gap-8 lg:flex-row-reverse">
+          <div className="h-[300px] w-[300px] shrink-0 overflow-hidden rounded-full border border-base-300/80 bg-white shadow-2xl lg:h-[360px] lg:w-[360px]">
             <img
               alt="Aura Beauty logo"
               className="h-full w-full object-cover object-center"
@@ -52,7 +56,7 @@ const Home = () => {
             <span className="badge badge-primary badge-outline mb-4">
               Nuevo sitio web
             </span>
-            <h1 className="text-4xl font-black leading-tight lg:text-5xl">
+            <h1 className="font-display text-4xl italic font-semibold leading-tight lg:text-5xl">
               Productos de belleza para todos los días
             </h1>
             <p className="py-6 text-base-content/75">
@@ -72,7 +76,7 @@ const Home = () => {
             <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
               Catálogo
             </p>
-            <h2 className="text-3xl font-bold">Productos disponibles</h2>
+            <h2 className="font-display text-3xl italic font-semibold">Productos disponibles</h2>
           </div>
           <p className="text-sm text-base-content/70">
             Agregá productos y pasá directo al carrito para pagar.

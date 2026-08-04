@@ -171,23 +171,62 @@ const parseCheckoutPayload = (req) =>
     })),
   });
 
-const maybeReserveStockAfterApproval = async (order) => {
+/**
+ * Reserve stock atomically at order creation time.
+ *
+ * Decrements stock for each item one by one, rolling back any successful
+ * decrements if a later item doesn't have enough stock. This prevents the
+ * race condition where two customers could check out the same last item
+ * simultaneously.
+ *
+ * Returns true if all items were reserved, false otherwise (with rollback).
+ */
+const reserveStock = async (order) => {
+  const decremented = [];
+
+  for (const item of order.items) {
+    const result = await ProductModel.updateOne(
+      { _id: item.product, stock: { $gte: item.quantity } },
+      { $inc: { stock: -item.quantity } },
+    );
+
+    if (result.modifiedCount === 0) {
+      // This item doesn't have enough stock — rollback previous decrements
+      logger.warn(
+        { orderId: order._id, productId: item.product },
+        "Stock reservation failed — insufficient stock, rolling back",
+      );
+
+      for (const d of decremented) {
+        await ProductModel.updateOne(
+          { _id: d.product },
+          { $inc: { stock: d.quantity } },
+        );
+      }
+
+      return false;
+    }
+
+    decremented.push({ product: item.product, quantity: item.quantity });
+  }
+
+  return true;
+};
+
+/**
+ * Restore stock for an order (e.g. when payment is rejected or cancelled).
+ */
+const restoreStock = async (order) => {
   const operations = order.items.map((item) => ({
     updateOne: {
-      filter: { _id: item.product, stock: { $gte: item.quantity } },
-      update: { $inc: { stock: -item.quantity } },
+      filter: { _id: item.product },
+      update: { $inc: { stock: item.quantity } },
     },
   }));
 
   if (operations.length > 0) {
-    const result = await ProductModel.bulkWrite(operations);
-
-    if (result.modifiedCount < operations.length) {
-      console.warn(
-        `[checkout] Stock reservation partial for order ${order._id}: ` +
-          `${result.modifiedCount}/${operations.length} items decremented`,
-      );
-    }
+    await ProductModel.bulkWrite(operations);
+    logger.info({ orderId: order._id }, "Stock restored for order");
   }
 };
 
@@ -247,9 +286,10 @@ const syncOrderFromMercadoPago = async (order) => {
       "Order status synced from Mercado Pago",
     );
 
+    // Stock is reserved at order creation time, so we only need to:
+    // - Send admin email when payment is approved
+    // - Restore stock when payment is rejected or cancelled
     if (previousStatus !== "approved" && nextStatus === "approved") {
-      await maybeReserveStockAfterApproval(order);
-
       try {
         await sendAdminPurchaseEmail(order);
       } catch (notificationError) {
@@ -258,6 +298,11 @@ const syncOrderFromMercadoPago = async (order) => {
           "Admin email notification failed during sync",
         );
       }
+    } else if (
+      ["rejected", "cancelled"].includes(nextStatus) &&
+      !["rejected", "cancelled"].includes(previousStatus)
+    ) {
+      await restoreStock(order);
     }
 
     return order;
@@ -352,6 +397,19 @@ export const createMercadoPagoPreference = async (req, res) => {
       paymentProvider: "mercadopago",
     });
 
+    // Reserve stock immediately to prevent race conditions where two
+    // customers could buy the same last item simultaneously. If any item
+    // doesn't have enough stock, delete the order and return an error.
+    const stockReserved = await reserveStock(order);
+
+    if (!stockReserved) {
+      await OrderModel.findByIdAndDelete(order._id);
+      return res.status(400).json({
+        message:
+          "No hay stock suficiente para uno o más productos en tu carrito.",
+      });
+    }
+
     const orderId = order._id.toString();
     const successUrl = buildCheckoutReturnUrl("/checkout/success", orderId);
     const failureUrl = buildCheckoutReturnUrl("/checkout/failure", orderId);
@@ -398,6 +456,9 @@ export const createMercadoPagoPreference = async (req, res) => {
       : preferenceResponse.init_point || preferenceResponse.sandbox_init_point;
 
     if (!checkoutUrl || !preferenceResponse.id) {
+      // Preference creation failed — restore stock and delete the order
+      await restoreStock(order);
+      await OrderModel.findByIdAndDelete(order._id);
       return res.status(502).json({
         message: "Mercado Pago no devolvió una URL de checkout válida.",
       });
@@ -514,9 +575,10 @@ export const mercadoPagoWebhook = async (req, res) => {
       "Order status updated",
     );
 
+    // Stock is reserved at order creation time, so we only need to:
+    // - Send admin email when payment is approved
+    // - Restore stock when payment is rejected or cancelled
     if (previousStatus !== "approved" && nextStatus === "approved") {
-      await maybeReserveStockAfterApproval(order);
-
       try {
         await sendAdminPurchaseEmail(order);
       } catch (notificationError) {
@@ -525,6 +587,11 @@ export const mercadoPagoWebhook = async (req, res) => {
           "Admin email notification failed",
         );
       }
+    } else if (
+      ["rejected", "cancelled"].includes(nextStatus) &&
+      !["rejected", "cancelled"].includes(previousStatus)
+    ) {
+      await restoreStock(order);
     }
 
     return res.status(200).json({ received: true });
@@ -597,12 +664,21 @@ export const getAdminOrders = async (_req, res) => {
         "_id user userEmail items totalAmount currency status mercadoPago createdAt updatedAt",
       );
 
-    // Sync non-terminal orders with Mercado Pago so the admin dashboard
-    // reflects the real payment status even when webhooks are unavailable
-    // (e.g. local development). We only sync pending/in_process orders to
-    // avoid unnecessary API calls for already-terminal orders.
+    // Sync only recent non-terminal orders (created within the last 30
+    // minutes) to avoid making unnecessary Mercado Pago API calls for
+    // every order on every dashboard load. In production, webhooks keep
+    // order statuses up-to-date; this sync is a fallback for when
+    // webhooks are unavailable (e.g. local development).
+    const SYNC_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+    const now = Date.now();
     const syncedOrders = await Promise.all(
-      orders.map((order) => syncOrderFromMercadoPago(order)),
+      orders.map((order) => {
+        const isRecent = now - order.createdAt.getTime() < SYNC_WINDOW_MS;
+        if (isRecent) {
+          return syncOrderFromMercadoPago(order);
+        }
+        return order;
+      }),
     );
 
     return res.status(200).json(syncedOrders);

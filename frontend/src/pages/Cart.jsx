@@ -44,8 +44,8 @@ const Cart = () => {
 
   if (items.length === 0) {
     return (
-      <section className="mx-auto mt-16 max-w-2xl rounded-box border border-base-300 bg-base-100 p-10 text-center shadow-sm">
-        <h1 className="text-3xl font-bold">Tu carrito está vacío</h1>
+      <section className="mx-auto mt-16 max-w-2xl rounded-box border border-base-300/80 bg-base-100/90 p-10 text-center shadow-sm backdrop-blur">
+        <h1 className="font-display text-3xl italic font-semibold">Tu carrito está vacío</h1>
         <p className="mt-3 text-base-content/70">
           Agregá productos del catálogo para iniciar tu compra.
         </p>
@@ -63,7 +63,7 @@ const Cart = () => {
           <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
             Carrito
           </p>
-          <h1 className="text-3xl font-bold">Revisá tu selección</h1>
+          <h1 className="font-display text-3xl italic font-semibold">Revisá tu selección</h1>
         </div>
 
         {items.map((item) => (
@@ -84,8 +84,8 @@ const Cart = () => {
         </Link>
       </div>
 
-      <aside className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm lg:sticky lg:top-6 lg:h-fit">
-        <h2 className="text-2xl font-bold">Resumen</h2>
+      <aside className="rounded-box border border-base-300/80 bg-base-100/90 p-6 shadow-sm backdrop-blur lg:sticky lg:top-6 lg:h-fit">
+        <h2 className="font-display text-2xl italic font-semibold">Resumen</h2>
         <div className="mt-6 space-y-3 text-sm">
           <div className="flex items-center justify-between">
             <span>Artículos</span>
