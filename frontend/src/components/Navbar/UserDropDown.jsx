@@ -64,9 +64,7 @@ const UserDropDown = () => {
           </li>
         )}
         <li role="menuitem">
-          <Link state={{ email: userInfo?.email }} to="/forgot-password">
-            Restablecer contraseña
-          </Link>
+          <Link to="/mi-perfil">Mi perfil</Link>
         </li>
         <li role="menuitem">
           <button onClick={handleLogout} type="button">

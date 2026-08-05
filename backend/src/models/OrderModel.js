@@ -50,10 +50,17 @@ const OrderSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    username: {
+      type: String,
+      required: false,
+      trim: true,
+      default: "",
+    },
     userPhone: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
+      default: "",
     },
     items: {
       type: [OrderItemSchema],
@@ -93,6 +100,10 @@ const OrderSchema = new mongoose.Schema(
       status: { type: String, trim: true, default: "" },
       statusDetail: { type: String, trim: true, default: "" },
       initPoint: { type: String, trim: true, default: "" },
+    },
+    adminNotified: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },

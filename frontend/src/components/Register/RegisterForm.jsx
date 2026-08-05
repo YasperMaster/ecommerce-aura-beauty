@@ -25,6 +25,7 @@ const RegisterForm = () => {
   const [isResending, setIsResending] = useState(false);
   const usernameValue = watch("username", "");
   const emailValue = watch("email", "");
+  const phoneValue = watch("phone", "");
   const passwordValue = watch("password", "");
   const redirectTo = useMemo(
     () => location.state?.redirectTo || "/",
@@ -180,6 +181,42 @@ const RegisterForm = () => {
             {errors.email.message}
           </p>
         )}
+      </div>
+
+      <div>
+        <label className="label" htmlFor="register-phone">
+          <span className="label-text">Teléfono móvil</span>
+        </label>
+        <input
+          {...register("phone", {
+            required: "Ingresá un número de teléfono.",
+            validate: (value) => {
+              if (!/^[\d\s-()]+$/.test(value)) {
+                return "Ingresá un número de teléfono válido (solo dígitos, espacios, guiones y paréntesis).";
+              }
+              const digits = value.replace(/\D/g, "");
+              if (digits.length < 8 || digits.length > 15) {
+                return "El teléfono debe tener entre 8 y 15 dígitos.";
+              }
+              return true;
+            },
+          })}
+          autoComplete="tel"
+          className={`input input-bordered w-full ${getInputStateClassName(
+            Boolean(phoneValue && !errors.phone),
+            Boolean(errors.phone),
+          )}`}
+          id="register-phone"
+          placeholder="Teléfono Móvil"
+          type="tel"
+        />
+        {errors.phone && (
+          <p className="text-red-500 text-sm mt-2 ml-1">
+            {errors.phone.message}
+          </p>
+        )}
+        <p className="mt-2 text-sm text-base-content/60">
+        </p>
       </div>
 
       <div className="relative">

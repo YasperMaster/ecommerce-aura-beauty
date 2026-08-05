@@ -31,6 +31,7 @@ export const authApi = axios.create({
 // header on all state-changing (POST/PUT/PATCH/DELETE) requests.
 
 let csrfToken = null;
+let csrfTokenPromise = null;
 
 /**
  * Reads a cookie value by name from document.cookie.
@@ -50,24 +51,38 @@ const getCookie = (name) => {
  * Should be called once on app startup (e.g. in UserContext).
  */
 export const fetchCsrfToken = async () => {
-  try {
-    await authApi.get("/csrf-token");
-    csrfToken = getCookie("csrf-token");
-  } catch {
-    // Non-fatal: CSRF protection may not be enabled (e.g. dev mode)
-    csrfToken = null;
-  }
+  if (csrfTokenPromise) return csrfTokenPromise;
+
+  csrfTokenPromise = (async () => {
+    try {
+      await authApi.get("/csrf-token");
+      csrfToken = getCookie("csrf-token");
+    } catch {
+      // Non-fatal: CSRF protection may not be enabled (e.g. dev mode)
+      csrfToken = null;
+    }
+  })();
+
+  return csrfTokenPromise;
 };
 
 /**
  * Axios request interceptor that attaches the CSRF token to all
  * state-changing requests (POST, PUT, PATCH, DELETE).
+ * If the CSRF token hasn't been fetched yet, waits for it before proceeding.
  */
-const attachCsrfToken = (config) => {
+const attachCsrfToken = async (config) => {
   const method = (config.method || "get").toLowerCase();
 
-  if (["post", "put", "patch", "delete"].includes(method) && csrfToken) {
-    config.headers["X-CSRF-Token"] = csrfToken;
+  if (["post", "put", "patch", "delete"].includes(method)) {
+    // Ensure CSRF token is available before sending state-changing requests
+    if (!csrfToken) {
+      await fetchCsrfToken();
+    }
+
+    if (csrfToken) {
+      config.headers["X-CSRF-Token"] = csrfToken;
+    }
   }
 
   return config;

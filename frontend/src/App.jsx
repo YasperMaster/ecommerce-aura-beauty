@@ -13,6 +13,7 @@ import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import MyPurchases from "./pages/MyPurchases.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import Profile from "./pages/Profile.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/admin/Dashboard.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
@@ -38,6 +39,7 @@ function App() {
             </Route>
             <Route element={<PrivateRoute />}>
               <Route element={<MyPurchases />} path="/mis-compras" />
+              <Route element={<Profile />} path="/mi-perfil" />
             </Route>
             <Route element={<NotFound />} path="*" />
           </Route>

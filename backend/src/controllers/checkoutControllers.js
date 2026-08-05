@@ -292,6 +292,8 @@ const syncOrderFromMercadoPago = async (order) => {
     if (previousStatus !== "approved" && nextStatus === "approved") {
       try {
         await sendAdminPurchaseEmail(order);
+        order.adminNotified = true;
+        await order.save();
       } catch (notificationError) {
         logger.error(
           { orderId, error: notificationError.message },
@@ -390,7 +392,8 @@ export const createMercadoPagoPreference = async (req, res) => {
     const order = await OrderModel.create({
       user: req.user._id,
       userEmail: req.user.email,
-      userPhone: req.user.phone,
+      username: req.user.username || "",
+      userPhone: req.user.phone || "",
       items: orderItems,
       totalAmount,
       currency: "ARS",
@@ -420,6 +423,7 @@ export const createMercadoPagoPreference = async (req, res) => {
     const testMode = isTestToken(token);
     const { preference } = getMercadoPagoClients();
 
+    const frontendUrl = normalizeFrontendUrl();
     const preferenceBody = {
       items: orderItems.map(buildMercadoPagoItem),
       payer: { email: req.user.email },
@@ -428,12 +432,6 @@ export const createMercadoPagoPreference = async (req, res) => {
         failure: failureUrl,
         pending: pendingUrl,
       },
-      // auto_return: "approved" makes Mercado Pago automatically redirect the
-      // buyer back to the success URL when the payment is approved, instead of
-      // showing a "return to site" button the user has to click.
-      // We always set this so the buyer is redirected back to the website
-      // automatically after completing the payment.
-      auto_return: "approved",
       external_reference: orderId,
       metadata: {
         orderId,
@@ -442,7 +440,12 @@ export const createMercadoPagoPreference = async (req, res) => {
       },
     };
 
-    // Only include notification_url when it is a publicly reachable address
+    // auto_return and notification_url require public HTTPS URLs.
+    // Only include them when not running on localhost.
+    if (!isLocalUrl(frontendUrl)) {
+      preferenceBody.auto_return = "approved";
+    }
+
     if (backendUrl && !isLocalUrl(backendUrl)) {
       preferenceBody.notification_url = `${backendUrl}/api/v1/checkout/mercadopago/webhook`;
     }
@@ -582,6 +585,8 @@ export const mercadoPagoWebhook = async (req, res) => {
     if (previousStatus !== "approved" && nextStatus === "approved") {
       try {
         await sendAdminPurchaseEmail(order);
+        order.adminNotified = true;
+        await order.save();
       } catch (notificationError) {
         logger.error(
           { orderId, error: notificationError.message },
@@ -611,9 +616,7 @@ export const getOrderStatus = async (req, res) => {
     const order = await OrderModel.findOne({
       _id: req.params.orderId,
       user: req.user._id,
-    }).select(
-      "_id totalAmount currency status items mercadoPago createdAt updatedAt",
-    );
+    });
 
     if (!order) {
       return res.status(404).json({ message: "Compra no encontrada." });
@@ -624,6 +627,22 @@ export const getOrderStatus = async (req, res) => {
     // This ensures the user sees the up-to-date status when they return
     // from the Mercado Pago checkout.
     const syncedOrder = await syncOrderFromMercadoPago(order);
+
+    // If the order is approved but the admin was never notified (e.g. the
+    // webhook never arrived and the sync already found it approved), send
+    // the notification now. This is the fallback for local development.
+    if (syncedOrder.status === "approved" && !syncedOrder.adminNotified) {
+      try {
+        await sendAdminPurchaseEmail(syncedOrder);
+        syncedOrder.adminNotified = true;
+        await syncedOrder.save();
+      } catch (notificationError) {
+        logger.error(
+          { orderId: syncedOrder._id, error: notificationError.message },
+          "Admin email notification failed on getOrderStatus fallback",
+        );
+      }
+    }
 
     return res.status(200).json(syncedOrder);
   } catch (error) {

@@ -88,3 +88,31 @@ export const logoutService = async () => {
     throw new Error(getApiErrorMessage(error, "No se pudo cerrar sesión."));
   }
 };
+
+export const updatePhoneService = async (phone) => {
+  try {
+    const response = await authApi.put("/auth/phone", { phone });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo actualizar el teléfono."),
+    );
+  }
+};
+
+export const changePasswordService = async ({
+  currentPassword,
+  newPassword,
+}) => {
+  try {
+    const response = await authApi.put("/auth/password", {
+      currentPassword,
+      newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      getApiErrorMessage(error, "No se pudo cambiar la contraseña."),
+    );
+  }
+};

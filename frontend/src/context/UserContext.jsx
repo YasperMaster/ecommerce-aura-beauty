@@ -8,6 +8,7 @@ import {
 } from "react";
 import { fetchCsrfToken } from "../services/api";
 import {
+  changePasswordService,
   forgotPasswordService,
   getProfileService,
   loginService,
@@ -15,6 +16,7 @@ import {
   registerService,
   resendCodeService,
   resetPasswordService,
+  updatePhoneService,
   verifyEmailService,
 } from "../services/authServices";
 
@@ -78,6 +80,19 @@ export const UserContextProvider = ({ children }) => {
     return response;
   }, []);
 
+  const updatePhone = useCallback(async (phone) => {
+    const response = await updatePhoneService(phone);
+    setUserInfo(response.user);
+    return response;
+  }, []);
+
+  const changePassword = useCallback(
+    async ({ currentPassword, newPassword }) => {
+      return changePasswordService({ currentPassword, newPassword });
+    },
+    [],
+  );
+
   useEffect(() => {
     // Fetch CSRF token on app startup so it's available for all
     // state-changing requests (POST/PUT/DELETE). This runs in parallel
@@ -98,6 +113,8 @@ export const UserContextProvider = ({ children }) => {
       forgotPassword,
       resetPassword,
       logout,
+      updatePhone,
+      changePassword,
       isAuthenticated: Boolean(userInfo?.id),
     }),
     [
@@ -111,6 +128,8 @@ export const UserContextProvider = ({ children }) => {
       forgotPassword,
       resetPassword,
       logout,
+      updatePhone,
+      changePassword,
     ],
   );
 
