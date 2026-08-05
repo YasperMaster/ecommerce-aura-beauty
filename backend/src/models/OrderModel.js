@@ -50,6 +50,11 @@ const OrderSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    userPhone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     items: {
       type: [OrderItemSchema],
       required: true,

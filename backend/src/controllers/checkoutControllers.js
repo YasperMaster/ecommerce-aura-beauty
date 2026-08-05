@@ -390,6 +390,7 @@ export const createMercadoPagoPreference = async (req, res) => {
     const order = await OrderModel.create({
       user: req.user._id,
       userEmail: req.user.email,
+      userPhone: req.user.phone,
       items: orderItems,
       totalAmount,
       currency: "ARS",
@@ -661,7 +662,7 @@ export const getAdminOrders = async (_req, res) => {
       .populate("user", "username email")
       .sort({ createdAt: -1 })
       .select(
-        "_id user userEmail items totalAmount currency status mercadoPago createdAt updatedAt",
+        "_id user userEmail userPhone items totalAmount currency status mercadoPago createdAt updatedAt",
       );
 
     // Sync only recent non-terminal orders (created within the last 30

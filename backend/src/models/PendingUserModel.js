@@ -24,6 +24,12 @@ const PendingUserSchema = new mongoose.Schema(
       minlength: 3,
       maxlength: 20,
     },
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 20,
+    },
     password: {
       type: String,
       required: true, // already bcrypt-hashed before saving

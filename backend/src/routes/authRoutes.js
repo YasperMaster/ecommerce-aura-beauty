@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  changePassword,
   forgotPassword,
   loginUser,
   logoutUser,
@@ -7,6 +8,7 @@ import {
   registerUser,
   resendVerificationCode,
   resetPassword,
+  updatePhone,
   verifyEmail,
 } from "../controllers/authControllers.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
@@ -76,5 +78,19 @@ router.post("/logout", logoutUser);
  * @access  Private
  */
 router.get("/profile", requireAuth, profile);
+
+/**
+ * @route   PUT /api/v1/auth/phone
+ * @desc    Update the authenticated user's phone number
+ * @access  Private
+ */
+router.put("/phone", requireAuth, updatePhone);
+
+/**
+ * @route   PUT /api/v1/auth/password
+ * @desc    Change the authenticated user's password (requires current password)
+ * @access  Private
+ */
+router.put("/password", requireAuth, changePassword);
 
 export default router;

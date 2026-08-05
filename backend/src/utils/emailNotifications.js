@@ -59,6 +59,7 @@ export const sendAdminPurchaseEmail = async (order) => {
       <h2>Nueva compra aprobada</h2>
       <p><strong>Orden:</strong> ${escapeHtml(String(order._id))}</p>
       <p><strong>Cliente:</strong> ${escapeHtml(order.userEmail)}</p>
+      <p><strong>Teléfono:</strong> ${escapeHtml(order.userPhone || "No informado")}</p>
       <p><strong>Total:</strong> ARS ${escapeHtml(String(order.totalAmount))}</p>
       <p><strong>Estado:</strong> ${escapeHtml(order.status)}</p>
       <h3>Productos</h3>
@@ -77,6 +78,7 @@ export const sendAdminPurchaseEmail = async (order) => {
     "Nueva compra aprobada",
     `Orden: ${order._id}`,
     `Cliente: ${order.userEmail}`,
+    `Teléfono: ${order.userPhone || "No informado"}`,
     `Total: ARS ${order.totalAmount}`,
     "Productos:",
     formatOrderItems(order),

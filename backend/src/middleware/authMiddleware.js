@@ -13,7 +13,7 @@ export const requireAuth = async (req, res, next) => {
 
     const payload = verifyAuthToken(token);
     const user = await UserModel.findById(payload.userId).select(
-      "_id username email isAdmin",
+      "_id username email phone isAdmin",
     );
 
     if (!user) {

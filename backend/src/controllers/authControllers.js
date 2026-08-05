@@ -1,11 +1,13 @@
 import bcrypt from "bcryptjs";
 import { ZodError } from "zod";
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resendCodeSchema,
   resetPasswordSchema,
+  updatePhoneSchema,
   verifyEmailSchema,
 } from "../schemas/authSchema.js";
 import UserModel from "../models/UserModel.js";
@@ -92,6 +94,7 @@ export const registerUser = async (req, res) => {
     const parsedData = registerSchema.parse(req.body);
     const email = normalizeEmail(parsedData.email);
     const username = parsedData.username.trim();
+    const phone = parsedData.phone.replace(/[\s-()]/g, "");
 
     logger.info({ email }, "Registration attempt");
 
@@ -114,7 +117,7 @@ export const registerUser = async (req, res) => {
     // fresh data + a new code instead of erroring on the unique index.
     await PendingUserModel.findOneAndUpdate(
       { email },
-      { email, username, password: hashedPassword, codeHash, attempts: 0, expiresAt },
+      { email, username, phone, password: hashedPassword, codeHash, attempts: 0, expiresAt },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
@@ -181,21 +184,20 @@ export const verifyEmail = async (req, res) => {
         .json({ message: "El código es incorrecto. Volvé a intentarlo." });
     }
 
-    // Re-check uniqueness at creation time too — guards against a race
-    // where the same email was confirmed twice concurrently.
-    const isFirstUser = (await UserModel.countDocuments()) === 0;
-
     const newUser = await UserModel.create({
       username: pendingUser.username,
       email: pendingUser.email,
+      phone: pendingUser.phone,
       password: pendingUser.password,
-      isAdmin: isFirstUser,
+      // Admin status is never granted via self-registration.
+      // To make a user admin, set `isAdmin: true` directly on the
+      // document in MongoDB (e.g. via Atlas's Collections UI).
     });
 
     await PendingUserModel.deleteOne({ _id: pendingUser._id });
 
     logger.info(
-      { userId: newUser._id, email, isAdmin: isFirstUser },
+      { userId: newUser._id, email },
       "Email confirmed, user created",
     );
 
@@ -425,4 +427,59 @@ export const logoutUser = async (_req, res) => {
 export const profile = async (req, res) => {
   logger.info({ userId: req.user._id }, "Profile requested");
   return res.status(200).json(sanitizeUser(req.user));
+};
+
+/**
+ * Allows an authenticated user to update their phone number.
+ */
+export const updatePhone = async (req, res) => {
+  try {
+    const parsedData = updatePhoneSchema.parse(req.body);
+    const phone = parsedData.phone.replace(/[\s-()]/g, "");
+
+    req.user.phone = phone;
+    await req.user.save();
+
+    logger.info({ userId: req.user._id }, "Phone number updated");
+
+    return res.status(200).json({
+      message: "Teléfono actualizado con éxito.",
+      user: sanitizeUser(req.user),
+    });
+  } catch (error) {
+    return handleAuthError(res, error);
+  }
+};
+
+/**
+ * Allows an authenticated user to change their password by providing
+ * their current password for verification.
+ */
+export const changePassword = async (req, res) => {
+  try {
+    const parsedData = changePasswordSchema.parse(req.body);
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      parsedData.currentPassword,
+      req.user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      logger.warn({ userId: req.user._id }, "Change password: incorrect current password");
+      return res
+        .status(401)
+        .json({ message: "La contraseña actual es incorrecta." });
+    }
+
+    req.user.password = await bcrypt.hash(parsedData.newPassword, 10);
+    await req.user.save();
+
+    logger.info({ userId: req.user._id }, "Password changed successfully");
+
+    return res.status(200).json({
+      message: "Contraseña actualizada con éxito.",
+    });
+  } catch (error) {
+    return handleAuthError(res, error);
+  }
 };
