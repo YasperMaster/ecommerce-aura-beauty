@@ -392,7 +392,7 @@ export const createMercadoPagoPreference = async (req, res) => {
     const order = await OrderModel.create({
       user: req.user._id,
       userEmail: req.user.email,
-      username: req.user.username || "",
+      fullName: req.user.fullName || "",
       userPhone: req.user.phone || "",
       items: orderItems,
       totalAmount,
@@ -659,6 +659,17 @@ export const getOrderStatus = async (req, res) => {
  */
 export const getMyOrders = async (req, res) => {
   try {
+
+    const SYNC_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
+    const now = Date.now();
+
+    const pendingOrders = await OrderModel.find({
+      user: req.user._id,
+      status: { $in: ["pending", "in_process"] },
+      createdAt: { $gte: new Date(now - SYNC_WINDOW_MS) },
+    });
+
+    await Promise.all(pendingOrders.map((order) => syncOrderFromMercadoPago(order)));
     const orders = await OrderModel.find({
       user: req.user._id,
       status: "approved",
@@ -678,7 +689,7 @@ export const getMyOrders = async (req, res) => {
 export const getAdminOrders = async (_req, res) => {
   try {
     const orders = await OrderModel.find({})
-      .populate("user", "username email")
+      .populate("user", "fullName email")
       .sort({ createdAt: -1 })
       .select(
         "_id user userEmail userPhone items totalAmount currency status mercadoPago createdAt updatedAt",

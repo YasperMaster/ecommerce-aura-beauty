@@ -93,7 +93,7 @@ export const registerUser = async (req, res) => {
   try {
     const parsedData = registerSchema.parse(req.body);
     const email = normalizeEmail(parsedData.email);
-    const username = parsedData.username.trim();
+    const fullName = parsedData.fullName.trim();
     const phone = parsedData.phone.replace(/[\s-()]/g, "");
 
     logger.info({ email }, "Registration attempt");
@@ -117,11 +117,11 @@ export const registerUser = async (req, res) => {
     // fresh data + a new code instead of erroring on the unique index.
     await PendingUserModel.findOneAndUpdate(
       { email },
-      { email, username, phone, password: hashedPassword, codeHash, attempts: 0, expiresAt },
+      { email, fullName, phone, password: hashedPassword, codeHash, attempts: 0, expiresAt },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
-    await sendVerificationEmail({ email, username, code });
+    await sendVerificationEmail({ email, fullName, code });
 
     logger.info({ email }, "Verification code sent");
 
@@ -185,7 +185,7 @@ export const verifyEmail = async (req, res) => {
     }
 
     const newUser = await UserModel.create({
-      username: pendingUser.username,
+      fullName: pendingUser.fullName,
       email: pendingUser.email,
       phone: pendingUser.phone,
       password: pendingUser.password,
@@ -247,7 +247,7 @@ export const resendVerificationCode = async (req, res) => {
 
     await sendVerificationEmail({
       email: pendingUser.email,
-      username: pendingUser.username,
+      fullName: pendingUser.fullName,
       code,
     });
 
@@ -293,7 +293,7 @@ export const forgotPassword = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
 
-    await sendPasswordResetEmail({ email, username: user.username, code });
+    await sendPasswordResetEmail({ email, fullName: user.fullName, code });
 
     logger.info({ email }, "Password reset code sent");
 

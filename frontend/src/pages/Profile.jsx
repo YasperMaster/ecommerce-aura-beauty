@@ -65,12 +65,12 @@ const Profile = () => {
           <div className="avatar placeholder">
             <div className="w-16 rounded-full bg-primary text-primary-content">
               <span className="text-2xl font-semibold">
-                {userInfo?.username?.[0]?.toUpperCase() || "A"}
+                {userInfo?.fullName?.[0]?.toUpperCase() || "A"}
               </span>
             </div>
           </div>
           <div>
-            <h2 className="text-xl font-semibold">{userInfo?.username}</h2>
+            <h2 className="text-xl font-semibold">{userInfo?.fullName}</h2>
             <p className="text-sm text-base-content/60">
               {userInfo?.isAdmin ? "Administrador" : "Cliente"}
             </p>
@@ -82,7 +82,7 @@ const Profile = () => {
             <FaUser className="text-base-content/50" size={18} />
             <div>
               <p className="text-xs text-base-content/50">Usuario</p>
-              <p className="font-medium">{userInfo?.username}</p>
+              <p className="font-medium">{userInfo?.fullName}</p>
             </div>
           </div>
 

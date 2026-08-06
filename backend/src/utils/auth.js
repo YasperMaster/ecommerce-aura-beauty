@@ -102,7 +102,7 @@ export const verifyRefreshToken = (token) => {
 
 export const sanitizeUser = (user) => ({
     id: user._id.toString(),
-    username: user.username,
+    fullName: user.fullName,
     email: user.email,
     phone: user.phone,
     isAdmin: Boolean(user.isAdmin),

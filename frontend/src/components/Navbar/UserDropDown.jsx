@@ -18,14 +18,14 @@ const UserDropDown = () => {
     }
   };
 
-  const userInitial = userInfo?.username?.[0]?.toUpperCase() || "A";
+  const userInitial = userInfo?.fullName?.[0]?.toUpperCase() || "A";
 
   return (
     <div className="dropdown dropdown-end relative z-[200]">
       <div
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        aria-label={`Menú de ${userInfo?.username || "usuario"}`}
+        aria-label={`Menú de ${userInfo?.fullName || "usuario"}`}
         className="avatar placeholder cursor-pointer"
         onClick={() => setIsOpen((prev) => !prev)}
         onKeyDown={(e) => {
@@ -47,7 +47,7 @@ const UserDropDown = () => {
         role="menu"
       >
         <li className="menu-title px-3 py-2">
-          <span>{userInfo?.username}</span>
+          <span>{userInfo?.fullName}</span>
           <span className="normal-case text-xs font-normal text-base-content/60">
             {userInfo?.email}
           </span>

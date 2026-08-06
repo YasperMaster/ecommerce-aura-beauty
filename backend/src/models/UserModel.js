@@ -14,12 +14,12 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    username: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 20,
+      maxlength: 100,
     },
     phone: {
       type: String,

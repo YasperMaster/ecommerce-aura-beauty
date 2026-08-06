@@ -17,12 +17,12 @@ const PendingUserSchema = new mongoose.Schema(
       lowercase: true,
       maxlength: 254,
     },
-    username: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 20,
+      maxlength: 100,
     },
     phone: {
       type: String,

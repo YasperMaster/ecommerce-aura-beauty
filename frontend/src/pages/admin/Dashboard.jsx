@@ -561,12 +561,16 @@ const Dashboard = () => {
                       Orden #{order._id}
                     </p>
                     <h3 className="text-lg font-semibold">
-                      {order.user?.username || order.userEmail}
+                      {order.user?.fullName || order.fullName || order.userEmail}
                     </h3>
                     <p className="text-sm text-base-content/70">
                       {order.userEmail}
                     </p>
                     <div className="flex flex-wrap gap-3 text-sm text-base-content/70">
+                      <span>
+                        Teléfono:{" "}
+                        <strong>{order.userPhone || "No informado"}</strong>
+                      </span>
                       <span>
                         Total:{" "}
                         <strong>{formatCurrency(order.totalAmount)}</strong>

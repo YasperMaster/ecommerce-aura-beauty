@@ -75,7 +75,7 @@ export const sendAdminPurchaseEmail = async (order) => {
           <tr>
             <td style="padding: 8px 0; font-weight: bold; color: #374151; width: 100px;">Cliente</td>
             <td style="padding: 8px 0; color: #1f2937;">
-              ${escapeHtml(order.username || "No informado")}<br>
+              ${escapeHtml(order.fullName || "No informado")}<br>
               <span style="color: #6b7280; font-size: 14px;">${escapeHtml(order.userEmail)}</span>
             </td>
           </tr>
@@ -113,7 +113,7 @@ export const sendAdminPurchaseEmail = async (order) => {
     "¡Tenés una nueva venta!",
     `Orden #${order._id}`,
     "",
-    `Cliente: ${order.username || "No informado"}`,
+    `Cliente: ${order.fullName || "No informado"}`,
     `Email: ${order.userEmail}`,
     `Teléfono: ${order.userPhone || "No informado"}`,
     `Total: ${formatPrice(order.totalAmount)}`,
@@ -132,7 +132,7 @@ export const sendAdminPurchaseEmail = async (order) => {
  * account, so callers MUST propagate failures instead of swallowing them.
  * Throws if RESEND_API_KEY isn't configured or the send fails.
  */
-export const sendVerificationEmail = async ({ email, username, code }) => {
+export const sendVerificationEmail = async ({ email, fullName, code }) => {
   if (!isConfigured()) {
     throw new Error(
       "No se pudo enviar el email de verificación: RESEND_API_KEY no está configurado.",
@@ -146,7 +146,7 @@ export const sendVerificationEmail = async ({ email, username, code }) => {
 
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
-      <h2>¡Hola, ${escapeHtml(username)}!</h2>
+      <h2>¡Hola, ${escapeHtml(fullName)}!</h2>
       <p>Usá este código para confirmar tu email y activar tu cuenta:</p>
       <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">
         ${escapeHtml(code)}
@@ -156,7 +156,7 @@ export const sendVerificationEmail = async ({ email, username, code }) => {
   `;
 
   const text = [
-    `Hola, ${username}!`,
+    `Hola, ${fullName}!`,
     `Tu código de confirmación es: ${code}`,
     "Vence en 15 minutos.",
     "Si vos no creaste esta cuenta, podés ignorar este email.",
@@ -171,7 +171,7 @@ export const sendVerificationEmail = async ({ email, username, code }) => {
  * silently skipping, since a user waiting to reset their password needs to
  * know immediately if the email couldn't be sent.
  */
-export const sendPasswordResetEmail = async ({ email, username, code }) => {
+export const sendPasswordResetEmail = async ({ email, fullName, code }) => {
   if (!isConfigured()) {
     throw new Error(
       "No se pudo enviar el email de restablecimiento: RESEND_API_KEY no está configurado.",
@@ -185,7 +185,7 @@ export const sendPasswordResetEmail = async ({ email, username, code }) => {
 
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #1f2937;">
-      <h2>¡Hola, ${escapeHtml(username)}!</h2>
+      <h2>¡Hola, ${escapeHtml(fullName)}!</h2>
       <p>Recibimos una solicitud para restablecer tu contraseña. Usá este código para continuar:</p>
       <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0;">
         ${escapeHtml(code)}
@@ -195,7 +195,7 @@ export const sendPasswordResetEmail = async ({ email, username, code }) => {
   `;
 
   const text = [
-    `Hola, ${username}!`,
+    `Hola, ${fullName}!`,
     "Recibimos una solicitud para restablecer tu contraseña.",
     `Tu código es: ${code}`,
     "Vence en 15 minutos.",

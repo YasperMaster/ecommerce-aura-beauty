@@ -60,6 +60,8 @@ export const fetchCsrfToken = async () => {
     } catch {
       // Non-fatal: CSRF protection may not be enabled (e.g. dev mode)
       csrfToken = null;
+    } finally {
+      csrfTokenPromise = null;
     }
   })();
 

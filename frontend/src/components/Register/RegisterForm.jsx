@@ -23,7 +23,7 @@ const RegisterForm = () => {
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const usernameValue = watch("username", "");
+  const fullNameValue = watch("fullName", "");
   const emailValue = watch("email", "");
   const phoneValue = watch("phone", "");
   const passwordValue = watch("password", "");
@@ -119,34 +119,33 @@ const RegisterForm = () => {
       onSubmit={handleSubmit(onSubmit)}
     >
       <div>
-        <label className="label" htmlFor="register-username">
-          <span className="label-text">Nombre de usuario</span>
+        <label className="label" htmlFor="register-fullname">
+          <span className="label-text">Nombre completo</span>
         </label>
         <input
-          {...register("username", {
-            required: "Ingresá un nombre de usuario.",
+          {...register("fullName", {
+            required: "Ingresá tu nombre completo.",
             minLength: {
               value: 3,
-              message: "Tu nombre de usuario debe tener al menos 3 caracteres.",
+              message: "El nombre debe tener al menos 3 caracteres.",
             },
             maxLength: {
-              value: 20,
-              message:
-                "Tu nombre de usuario debe tener a lo sumo 20 caracteres.",
+              value: 100,
+              message: "El nombre debe tener a lo sumo 100 caracteres.",
             },
           })}
-          autoComplete="username"
+          autoComplete="name"
           className={`input input-bordered w-full ${getInputStateClassName(
-            Boolean(usernameValue && !errors.username),
-            Boolean(errors.username),
+            Boolean(fullNameValue && !errors.fullName),
+            Boolean(errors.fullName),
           )}`}
-          id="register-username"
-          placeholder="Nombre de usuario"
+          id="register-fullname"
+          placeholder="Nombre completo"
           type="text"
         />
-        {errors.username && (
+        {errors.fullName && (
           <p className="text-red-500 text-sm mt-2 ml-1">
-            {errors.username.message}
+            {errors.fullName.message}
           </p>
         )}
       </div>

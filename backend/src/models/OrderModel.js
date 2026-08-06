@@ -50,7 +50,7 @@ const OrderSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    username: {
+    fullName: {
       type: String,
       required: false,
       trim: true,

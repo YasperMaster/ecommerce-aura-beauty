@@ -87,7 +87,7 @@ const Navbar = () => {
               <>
                 <div className="hidden text-right md:block">
                   <p className="text-sm font-semibold">
-                    Hola, {userInfo?.username}
+                    Hola, {userInfo?.fullName}
                   </p>
                   <p className="text-xs text-base-content/60">
                     Tu sesión está activa
