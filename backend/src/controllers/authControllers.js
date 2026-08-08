@@ -459,9 +459,21 @@ export const changePassword = async (req, res) => {
   try {
     const parsedData = changePasswordSchema.parse(req.body);
 
+   // requireAuth intentionally excludes the password hash from req.user
+    // (it's not needed by most routes, and keeping it off req.user reduces
+    // the chance of it leaking into logs or other handlers). Fetch it
+    // fresh here, scoped to just this request.
+    const userWithPassword = await UserModel.findById(req.user._id).select(
+      "password",
+    );
+
+    if (!userWithPassword) {
+      return res.status(401).json({ message: "La sesión ya no es válida." });
+    }
+
     const isCurrentPasswordValid = await bcrypt.compare(
       parsedData.currentPassword,
-      req.user.password,
+      userWithPassword.password,
     );
 
     if (!isCurrentPasswordValid) {
@@ -471,8 +483,8 @@ export const changePassword = async (req, res) => {
         .json({ message: "La contraseña actual es incorrecta." });
     }
 
-    req.user.password = await bcrypt.hash(parsedData.newPassword, 10);
-    await req.user.save();
+    userWithPassword.password = await bcrypt.hash(parsedData.newPassword, 10);
+    await userWithPassword.save();
 
     logger.info({ userId: req.user._id }, "Password changed successfully");
 
