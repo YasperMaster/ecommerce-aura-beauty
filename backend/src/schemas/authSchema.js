@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  fullName: z.string().trim().min(3, "El nombre debe tener al menos 3 caracteres.").max(100, "El nombre debe tener a lo sumo 100 caracteres."),
+  fullName: z
+    .string()
+    .trim()
+    .min(3, "El nombre debe tener al menos 3 caracteres.")
+    .max(40, "El nombre debe tener a lo sumo 40 caracteres.")
+    .regex(/^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/, "El nombre solo puede contener letras.",)
+    .transform((value) => value.charAt(0).toUpperCase() + value.slice(1)),
   email: z.string().trim().email().max(254),
   password: z.string().min(6).max(30),
   phone: z

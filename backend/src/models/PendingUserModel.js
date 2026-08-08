@@ -22,7 +22,7 @@ const PendingUserSchema = new mongoose.Schema(
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 100,
+      maxlength: 40,
     },
     phone: {
       type: String,

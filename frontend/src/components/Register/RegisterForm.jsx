@@ -130,8 +130,19 @@ const RegisterForm = () => {
               message: "El nombre debe tener al menos 3 caracteres.",
             },
             maxLength: {
-              value: 100,
-              message: "El nombre debe tener a lo sumo 100 caracteres.",
+              value: 40,
+              message: "El nombre debe tener a lo sumo 40 caracteres.",
+            },
+            pattern: {
+              value: /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/,
+              message: "El nombre solo puede contener letras.",
+            },
+            onChange: (e) => {
+              if (e.target.value.length > 0) {
+                e.target.value =
+                  e.target.value.charAt(0).toUpperCase() +
+                  e.target.value.slice(1);
+              }
             },
           })}
           autoComplete="name"
@@ -140,6 +151,7 @@ const RegisterForm = () => {
             Boolean(errors.fullName),
           )}`}
           id="register-fullname"
+          maxLength={40}
           placeholder="Nombre completo"
           type="text"
         />
