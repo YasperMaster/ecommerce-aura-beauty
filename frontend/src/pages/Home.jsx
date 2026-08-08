@@ -57,10 +57,11 @@ const Home = () => {
               Nuevo sitio web
             </span>
             <h1 className="font-display text-4xl italic font-semibold leading-tight lg:text-5xl">
-              Productos de belleza para todos los días
+              Belleza para todos los días
             </h1>
             <p className="py-6 text-base-content/75">
-              Descubrí productos de belleza.
+              Descubrí productos de maquillaje y cosmética.
+              <br />
               Registrate, armá tu carrito y finalizá tu compra.
             </p>
             <a className="btn btn-primary" href="#products">

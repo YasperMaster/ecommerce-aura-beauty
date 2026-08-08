@@ -62,7 +62,7 @@ const Navbar = () => {
               Aura Beauty
             </p>
             <p className="text-[11px] uppercase tracking-[0.35em] text-base-content/50">
-              Productos cosméticos
+              Productos de maquillaje
             </p>
           </div>
 

@@ -16,7 +16,7 @@ const Footer = () => {
               Aura Beauty
             </p>
             <p className="text-[11px] uppercase tracking-[0.35em] text-base-content/50">
-              Productos cosméticos
+              Productos de maquillaje
             </p>
             <p className="mt-2 text-sm text-base-content/60">
               © {new Date().getFullYear()} Aura Beauty. Cosmética y maquillaje.
@@ -26,11 +26,11 @@ const Footer = () => {
           <div className="flex flex-col items-center gap-3">
             <span className="flex items-center gap-2 text-base-content/60">
               <span className="h-px w-8 bg-gradient-to-r from-transparent to-primary/50" />
-              <HiSparkles className="text-primary/70" size={14} />
-              <span className="font-display text-xs italic tracking-wide">
+              <HiSparkles className="text-primary/70" size={19} />
+              <span className="font-display text-s italic tracking-wide">
                 Seguinos
               </span>
-              <HiSparkles className="text-primary/70" size={14} />
+              <HiSparkles className="text-primary/70" size={19} />
               <span className="h-px w-8 bg-gradient-to-l from-transparent to-primary/50" />
             </span>
             <div className="flex flex-wrap items-center gap-4 text-sm text-base-content/70">
