@@ -8,6 +8,7 @@ import { validateEnvironment } from "./config/validateEnv.js";
 import { logger } from "./utils/logger.js";
 import { csrfMiddleware, getCsrfToken } from "./middleware/csrfProtection.js";
 import { ensureSessionId } from "./middleware/sessionId.js";
+import { requireDb } from "./config/conifgdb.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
@@ -104,9 +105,9 @@ app.get("/api/health", (_req, res) => {
 
 app.get("/api/v1/csrf-token", ensureSessionId, getCsrfToken);
 
-app.use("/api/v1/auth", csrfMiddleware, authRoutes);
-app.use("/api/v1/products", csrfMiddleware, productRoutes);
-app.use("/api/v1/checkout", csrfMiddleware, checkoutRoutes);
+app.use("/api/v1/auth", requireDb, csrfMiddleware, authRoutes);
+app.use("/api/v1/products", requireDb, csrfMiddleware, productRoutes);
+app.use("/api/v1/checkout", requireDb, csrfMiddleware, checkoutRoutes);
 
 app.use((error, req, res, next) => {
   logger.error({
