@@ -140,27 +140,35 @@ const ProductDetail = () => {
           </p>
 
           <div className="mt-6 flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm" htmlFor="qty">
-              Cantidad
-              <input
-                className="input input-bordered input-no-spinner w-20"
-                disabled={availableStock <= 0}
-                id="qty"
-                inputMode="numeric"
-                max={availableStock || 1}
-                min="1"
-                onChange={(e) => {
-                  const parsed = Number(e.target.value);
-                  const clamped = Math.min(
-                    Math.max(parsed || 1, 1),
-                    availableStock || 1,
-                  );
-                  setQty(clamped);
-                }}
-                type="number"
-                value={qty}
-              />
-            </label>
+            <span className="text-sm font-medium">Cantidad</span>
+            <div className="flex items-center gap-2">
+              <button
+                aria-label={`Quitar una unidad de ${product.title}`}
+                className="btn btn-outline btn-sm"
+                disabled={availableStock <= 0 || qty <= 1}
+                onClick={() => setQty((prev) => Math.max(prev - 1, 1))}
+                type="button"
+              >
+                -
+              </button>
+              <span
+                aria-live="polite"
+                className="min-w-8 text-center font-semibold"
+              >
+                {qty}
+              </span>
+              <button
+                aria-label={`Agregar una unidad de ${product.title}`}
+                className="btn btn-outline btn-sm"
+                disabled={availableStock <= 0 || qty >= availableStock}
+                onClick={() =>
+                  setQty((prev) => Math.min(prev + 1, availableStock || 1))
+                }
+                type="button"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <button

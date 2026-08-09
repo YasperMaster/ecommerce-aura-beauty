@@ -8,6 +8,8 @@ import Cart from "./Cart";
 import UserDropDown from "./UserDropDown";
 
 const OWNER_FULL_NAME = "Pilar Yasparra";
+const SHOW_AT_TOP_THRESHOLD = 24;
+const HIDE_ON_DELTA = 5;
 
 const Navbar = () => {
   const { isAuthenticated, userInfo, loading } = useUser();
@@ -15,18 +17,33 @@ const Navbar = () => {
   const lastScrollYRef = useRef(0);
 
   useEffect(() => {
+    // Seed the ref with the current scroll position so the first scroll
+    // event has an accurate baseline. Without this, a page that loads
+    // already scrolled (e.g. browser-restored position) hides the navbar
+    // on the very first upward scroll — currentScrollY is always > 0, so
+    // the downward branch fires incorrectly.
+    lastScrollYRef.current = window.scrollY;
+
+    let ticking = false;
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (ticking) return;
+      ticking = true;
 
-      if (currentScrollY <= 24) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollYRef.current) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
+      window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
 
-      lastScrollYRef.current = currentScrollY;
+        if (currentScrollY <= SHOW_AT_TOP_THRESHOLD) {
+          setIsVisible(true);
+        } else if (currentScrollY > lastScrollYRef.current + HIDE_ON_DELTA) {
+          setIsVisible(false);
+        } else if (currentScrollY < lastScrollYRef.current - HIDE_ON_DELTA) {
+          setIsVisible(true);
+        }
+
+        lastScrollYRef.current = currentScrollY;
+        ticking = false;
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -38,10 +55,10 @@ const Navbar = () => {
 
   const headerClassName = useMemo(
     () =>
-      `sticky top-4 z-40 pt-2 transition-all duration-300 ease-out ${
+      `sticky top-4 z-40 pt-2 transition-[transform,opacity] duration-350 ease-in-out ${
         isVisible
           ? "translate-y-0 opacity-100"
-          : "-translate-y-6 opacity-0 pointer-events-none"
+          : "-translate-y-full opacity-0 pointer-events-none"
       }`,
     [isVisible],
   );

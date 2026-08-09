@@ -1,8 +1,16 @@
+import { useEffect } from "react";
+import { useLocation, Outlet } from "react-router";
 import Footer from "../components/Footer/Footer";
 import NavBar from "../components/Navbar/Navbar";
-import { Outlet } from "react-router";
 
 const Layout = () => {
+  // Scroll to top on every navigation so users always land at the top
+  // of the page instead of inheriting the previous page's scroll position.
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <div className="min-h-screen w-full">
       <a
