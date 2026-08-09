@@ -130,8 +130,8 @@ const LoginForm = () => {
         <div className="alert alert-warning text-sm">
           <span>
             Revisá tu correo y contraseña. Si todavía no tenés una cuenta en
-            Aura Beauty, no hace falta que sigas intentando ingresar —{" "}
-            <Link className="link link-primary font-semibold" to="/register">
+            Aura Beauty {" "}
+            <Link className="link font-semibold" to="/register">
               creá tu cuenta acá
             </Link>
             .
