@@ -19,6 +19,7 @@ const LoginForm = () => {
   } = useForm({ mode: "onChange" });
 
   const [showPassword, setShowPassword] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(false);
   const emailValue = watch("email", "");
   const passwordValue = watch("password", "");
   const redirectTo = useMemo(
@@ -27,6 +28,7 @@ const LoginForm = () => {
   );
 
   const onSubmit = async (data) => {
+    setLoginFailed(false);
     try {
       const response = await login(data);
       toast.success(response.message);
@@ -34,6 +36,7 @@ const LoginForm = () => {
       navigate(redirectTo);
     } catch (error) {
       toast.error(error.message);
+      setLoginFailed(true);
     }
   };
 
@@ -122,7 +125,7 @@ const LoginForm = () => {
           </Link>
         </p>
       </div>
-      
+
       {loginFailed && (
         <div className="alert alert-warning text-sm">
           <span>
