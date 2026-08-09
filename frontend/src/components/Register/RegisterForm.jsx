@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useUser } from "../../context/UserContext";
 import { getInputStateClassName } from "../../utils/formHelpers";
 
@@ -72,7 +72,7 @@ const RegisterForm = () => {
   if (pendingEmail) {
     return (
       <form
-        className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+        className="flex flex-col gap-4 lg:gap-6"
         key="verify-email-step"
         onSubmit={onVerifyCode}
       >
@@ -114,7 +114,7 @@ const RegisterForm = () => {
 
   return (
     <form
-      className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+      className="flex flex-col gap-4 lg:gap-6"
       key="register-details-step"
       onSubmit={handleSubmit(onSubmit)}
     >
@@ -284,13 +284,6 @@ const RegisterForm = () => {
       >
         {isSubmitting ? "Creando cuenta..." : "Registrarse"}
       </button>
-
-      <p className="text-center text-sm text-base-content/70">
-        ¿Ya tenés una cuenta?{" "}
-        <Link className="link link-primary" to="/login">
-          Iniciá sesión
-        </Link>
-      </p>
     </form>
   );
 };

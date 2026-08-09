@@ -42,7 +42,7 @@ const LoginForm = () => {
 
   return (
     <form
-      className="mt-8 flex flex-col gap-4 lg:gap-6 max-w-[500px] mx-auto"
+      className="flex flex-col gap-4 lg:gap-6"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div>
@@ -130,7 +130,7 @@ const LoginForm = () => {
         <div className="alert alert-warning text-sm">
           <span>
             Revisá tu correo y contraseña. Si todavía no tenés una cuenta en
-            Aura Beauty {" "}
+            Aura Beauty, no hace falta que sigas intentando ingresar —{" "}
             <Link className="link font-semibold" to="/register">
               creá tu cuenta acá
             </Link>
@@ -146,15 +146,6 @@ const LoginForm = () => {
       >
         {isSubmitting ? "Ingresando..." : "Iniciá sesión"}
       </button>
-
-      <div className="flex items-center gap-3 text-sm text-base-content/50">
-        <div className="h-px flex-1 bg-base-300" />
-        o
-        <div className="h-px flex-1 bg-base-300" />
-      </div>
-      <Link className="btn btn-outline btn-primary" to="/register">
-        ¿Todavía no tenés cuenta? Creala acá
-      </Link>
     </form>
   );
 };
