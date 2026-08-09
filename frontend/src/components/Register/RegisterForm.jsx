@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -31,6 +31,13 @@ const RegisterForm = () => {
     () => location.state?.redirectTo || "/",
     [location.state],
   );
+
+
+  useEffect(() => {
+    if (pendingEmail) {
+      window.scrollTo(0, 0);
+    }
+  }, [pendingEmail]);
 
   const onSubmit = async (data) => {
     try {
