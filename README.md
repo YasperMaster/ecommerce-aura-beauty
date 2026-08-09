@@ -1,6 +1,6 @@
 # Aura Beauty Ecommerce
 
-Tienda online de productos de maquillaje y belleza. Explora productos, registráte, iniciá sesión, agregá productos al carrito y pagá utilizando mercadopago.
+Tienda online de productos de maquillaje y belleza.
 
 ## Stack
 
