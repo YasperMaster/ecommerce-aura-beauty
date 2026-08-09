@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
-import { HiSparkles } from "react-icons/hi2";
+import { HiHome, HiSparkles } from "react-icons/hi2";
 import { Link } from "react-router";
 import { useUser } from "../../context/UserContext";
 import AuthButtons from "./AuthButtons";
@@ -74,14 +74,14 @@ const Navbar = () => {
         </div>
 
         <div className="relative grid grid-cols-1 items-center gap-3 lg:grid-cols-[1fr_auto_1fr]">
-          <div>
+          <Link className="block" to="/">
             <p className="font-display text-xl italic font-semibold tracking-wide text-base-content sm:text-2xl">
               Aura Beauty
             </p>
             <p className="text-[11px] uppercase tracking-[0.35em] text-base-content/50">
               Productos de maquillaje
             </p>
-          </div>
+          </Link>
 
           <div className="hidden items-center justify-self-center gap-3 text-base-content/60 lg:flex">
             <span className="h-px w-10 bg-gradient-to-r from-transparent via-primary/40 to-primary/60" />
@@ -134,9 +134,10 @@ const Navbar = () => {
       <nav className="relative z-20 navbar rounded-box border border-base-300/80 bg-base-100/90 shadow-sm backdrop-blur">
         <div className="navbar-start">
           <Link
-            className="btn btn-ghost font-display text-2xl italic font-semibold tracking-wide"
+            className="btn btn-ghost gap-2 font-display text-2xl italic font-semibold tracking-wide"
             to="/"
           >
+            <HiHome size={22} />
             Aura Beauty
           </Link>
         </div>

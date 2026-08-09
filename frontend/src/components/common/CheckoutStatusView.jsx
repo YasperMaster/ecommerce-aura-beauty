@@ -31,7 +31,7 @@ const contentByVariant = {
     badge: "Pago recibido",
     title: "¡Gracias por tu compra!",
     description:
-      "Tu pedido fue registrado. Si el pago ya fue confirmado por Mercado Pago, el estado se muestra abajo. En algunos métodos de pago puede demorar unos minutos.",
+      "Tu pedido fue registrado. En algunos métodos de pago puede demorar unos minutos. En breve me voy a poner en contacto con vos.",
     alertClass: "alert-success",
   },
   pending: {
