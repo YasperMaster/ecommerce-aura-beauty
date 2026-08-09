@@ -108,41 +108,43 @@ const ForgotPasswordForm = () => {
           )}
         </div>
 
-        <div className="relative">
+        <div>
           <label className="label" htmlFor="reset-password">
             <span className="label-text">Nueva contraseña</span>
           </label>
-          <input
-            {...resetForm.register("newPassword", {
-              required: "Ingresá tu nueva contraseña.",
-              minLength: {
-                value: 6,
-                message: "La contraseña debe tener al menos 6 caracteres.",
-              },
-              maxLength: {
-                value: 30,
-                message: "La contraseña debe tener a lo sumo 30 caracteres.",
-              },
-            })}
-            autoComplete="new-password"
-            className={`input input-bordered w-full pr-12 ${getInputStateClassName(
-              Boolean(newPasswordValue && !resetForm.formState.errors.newPassword),
-              Boolean(resetForm.formState.errors.newPassword),
-            )}`}
-            id="reset-password"
-            placeholder="Nueva contraseña"
-            type={showPassword ? "text" : "password"}
-          />
-          <button
-            aria-label={
-              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-            }
-            className="cursor-pointer absolute right-4 top-[52px] transform -translate-y-1/2 text-gray-600"
-            onClick={() => setShowPassword((prev) => !prev)}
-            type="button"
-          >
-            {showPassword ? <FaEyeSlash size={23} /> : <FaEye size={23} />}
-          </button>
+          <div className="relative">
+            <input
+              {...resetForm.register("newPassword", {
+                required: "Ingresá tu nueva contraseña.",
+                minLength: {
+                  value: 6,
+                  message: "La contraseña debe tener al menos 6 caracteres.",
+                },
+                maxLength: {
+                  value: 30,
+                  message: "La contraseña debe tener a lo sumo 30 caracteres.",
+                },
+              })}
+              autoComplete="new-password"
+              className={`input input-bordered w-full pr-12 ${getInputStateClassName(
+                Boolean(newPasswordValue && !resetForm.formState.errors.newPassword),
+                Boolean(resetForm.formState.errors.newPassword),
+              )}`}
+              id="reset-password"
+              placeholder="Nueva contraseña"
+              type={showPassword ? "text" : "password"}
+            />
+            <button
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+              className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 text-gray-600"
+              onClick={() => setShowPassword((prev) => !prev)}
+              type="button"
+            >
+              {showPassword ? <FaEyeSlash size={23} /> : <FaEye size={23} />}
+            </button>
+          </div>
           {resetForm.formState.errors.newPassword && (
             <p className="text-red-500 text-sm mt-2 ml-1">
               {resetForm.formState.errors.newPassword.message}
@@ -207,10 +209,20 @@ const ForgotPasswordForm = () => {
           placeholder="Correo electrónico"
           type="email"
         />
-        <Link className="link link-primary" to="/login">
-          Volver a iniciar sesión
-        </Link>
+        {emailForm.formState.errors.email && (
+          <p className="text-red-500 text-sm mt-2 ml-1">
+            {emailForm.formState.errors.email.message}
+          </p>
+        )}
       </div>
+
+      <button className="btn btn-primary mt-2" disabled={isRequesting} type="submit">
+        {isRequesting ? "Enviando..." : "Enviar código"}
+      </button>
+
+      <Link className="link link-primary text-center" to="/login">
+        Volver a iniciar sesión
+      </Link>
     </form>
   );
 };

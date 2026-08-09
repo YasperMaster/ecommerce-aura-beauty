@@ -230,41 +230,43 @@ const RegisterForm = () => {
         </p>
       </div>
 
-      <div className="relative">
+      <div>
         <label className="label" htmlFor="register-password">
           <span className="label-text">Contraseña</span>
         </label>
-        <input
-          {...register("password", {
-            required: "Ingresá una contraseña.",
-            minLength: {
-              value: 6,
-              message: "La contraseña debe tener al menos 6 caracteres.",
-            },
-            maxLength: {
-              value: 30,
-              message: "La contraseña debe tener a lo sumo 30 caracteres.",
-            },
-          })}
-          autoComplete="new-password"
-          className={`input input-bordered w-full pr-12 ${getInputStateClassName(
-            Boolean(passwordValue && !errors.password),
-            Boolean(errors.password),
-          )}`}
-          id="register-password"
-          placeholder="Contraseña"
-          type={showPassword ? "text" : "password"}
-        />
-        <button
-          aria-label={
-            showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-          }
-          className="cursor-pointer absolute right-4 top-[52px] transform -translate-y-1/2 text-gray-600"
-          onClick={() => setShowPassword((prev) => !prev)}
-          type="button"
-        >
-          {showPassword ? <FaEyeSlash size={23} /> : <FaEye size={23} />}
-        </button>
+        <div className="relative">
+          <input
+            {...register("password", {
+              required: "Ingresá una contraseña.",
+              minLength: {
+                value: 6,
+                message: "La contraseña debe tener al menos 6 caracteres.",
+              },
+              maxLength: {
+                value: 30,
+                message: "La contraseña debe tener a lo sumo 30 caracteres.",
+              },
+            })}
+            autoComplete="new-password"
+            className={`input input-bordered w-full pr-12 ${getInputStateClassName(
+              Boolean(passwordValue && !errors.password),
+              Boolean(errors.password),
+            )}`}
+            id="register-password"
+            placeholder="Contraseña"
+            type={showPassword ? "text" : "password"}
+          />
+          <button
+            aria-label={
+              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+            className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 text-gray-600"
+            onClick={() => setShowPassword((prev) => !prev)}
+            type="button"
+          >
+            {showPassword ? <FaEyeSlash size={23} /> : <FaEye size={23} />}
+          </button>
+        </div>
         {errors.password && (
           <p className="text-red-500 text-sm mt-2 ml-1">
             {errors.password.message}
