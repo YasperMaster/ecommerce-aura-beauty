@@ -122,6 +122,19 @@ const LoginForm = () => {
           </Link>
         </p>
       </div>
+      
+      {loginFailed && (
+        <div className="alert alert-warning text-sm">
+          <span>
+            Revisá tu correo y contraseña. Si todavía no tenés una cuenta en
+            Aura Beauty, no hace falta que sigas intentando ingresar —{" "}
+            <Link className="link link-primary font-semibold" to="/register">
+              creá tu cuenta acá
+            </Link>
+            .
+          </span>
+        </div>
+      )}
 
       <button
         className="btn btn-primary mt-2"
@@ -131,12 +144,14 @@ const LoginForm = () => {
         {isSubmitting ? "Ingresando..." : "Iniciá sesión"}
       </button>
 
-      <p className="text-center text-sm text-base-content/70">
-        ¿Todavía no tenés cuenta?{" "}
-        <Link className="link link-primary" to="/register">
-          Creala acá
-        </Link>
-      </p>
+      <div className="flex items-center gap-3 text-sm text-base-content/50">
+        <div className="h-px flex-1 bg-base-300" />
+        o
+        <div className="h-px flex-1 bg-base-300" />
+      </div>
+      <Link className="btn btn-outline btn-primary" to="/register">
+        ¿Todavía no tenés cuenta? Creala acá
+      </Link>
     </form>
   );
 };
