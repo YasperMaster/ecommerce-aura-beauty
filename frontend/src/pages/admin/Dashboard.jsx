@@ -35,6 +35,9 @@ const emptyValues = {
   isActive: true,
 };
 
+const capitalizeFirst = (value) =>
+  value.length > 0 ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+
 const fileToDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -213,9 +216,10 @@ const Dashboard = () => {
   };
 
   const handleOptionFieldChange = (localKey, field, value) => {
+    const nextValue = field === "label" ? capitalizeFirst(value) : value;
     setOptions((current) =>
       current.map((o) =>
-        o._localKey === localKey ? { ...o, [field]: value } : o,
+        o._localKey === localKey ? { ...o, [field]: nextValue } : o,
       ),
     );
   };
@@ -489,7 +493,7 @@ const Dashboard = () => {
                 <input
                   className="input input-bordered w-full"
                   id="option-group-name"
-                  onChange={(e) => setOptionGroupName(e.target.value)}
+                  onChange={(e) => setOptionGroupName(capitalizeFirst(e.target.value))}
                   placeholder="Ej: Color, Talle, Tipo"
                   type="text"
                   value={optionGroupName}
