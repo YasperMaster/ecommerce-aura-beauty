@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
 
 /**
  * Modern image carousel with smooth fade transitions, chevron icon
- * navigation buttons that appear on hover, and a clean thumbnail strip.
+ * navigation buttons that appear on hover, a clean thumbnail strip, and a
+ * click-to-expand lightbox for viewing the full, uncropped image.
  */
 export default function ImageCarousel({ images = [] }) {
   const [index, setIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Clamp the index if the images array changes (e.g. switching products)
   useEffect(() => {
@@ -26,16 +28,21 @@ export default function ImageCarousel({ images = [] }) {
     setIndex((i) => (i + 1) % images.length);
   }, [images.length]);
 
-  // Keyboard navigation
+  const openLightbox = useCallback(() => setIsLightboxOpen(true), []);
+  const closeLightbox = useCallback(() => setIsLightboxOpen(false), []);
+
+  // Keyboard navigation — arrow keys move slides; inside the lightbox,
+  // Escape closes it too.
   useEffect(() => {
-    if (images.length <= 1) return;
+    if (images.length <= 1 && !isLightboxOpen) return;
     const handler = (e) => {
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
+      if (e.key === "Escape" && isLightboxOpen) closeLightbox();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [images.length, prev, next]);
+  }, [images.length, prev, next, isLightboxOpen, closeLightbox]);
 
   if (!images || images.length === 0) {
     return (
@@ -50,7 +57,10 @@ export default function ImageCarousel({ images = [] }) {
   return (
     <div className="group">
       {/* ── Main image stage ───────────────────────────────────────── */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-base-200">
+      <div
+        className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-2xl bg-base-200"
+        onClick={openLightbox}
+      >
         {/* Stacked images with opacity transition for a smooth fade */}
         <div className="relative h-full w-full">
           {images.map((src, i) => (
@@ -137,6 +147,56 @@ export default function ImageCarousel({ images = [] }) {
               />
             </button>
           ))}
+        </div>
+      )}
+
+      {/* ── Lightbox: full, uncropped image ─────────────────────────── */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/90 p-4"
+          onClick={closeLightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Imagen ampliada del producto"
+        >
+          <button
+            aria-label="Cerrar"
+            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-base-100/20 text-white transition-colors hover:bg-base-100/30"
+            onClick={closeLightbox}
+            type="button"
+          >
+            <FaTimes size={18} />
+          </button>
+
+          {hasMultiple && (
+            <>
+              <button
+                aria-label="Imagen anterior"
+                className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-base-100/20 text-white transition-colors hover:bg-base-100/30"
+                onClick={prev}
+                type="button"
+              >
+                <FaChevronLeft size={20} />
+              </button>
+              <button
+                aria-label="Imagen siguiente"
+                className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-base-100/20 text-white transition-colors hover:bg-base-100/30"
+                onClick={next}
+                type="button"
+              >
+                <FaChevronRight size={20} />
+              </button>
+            </>
+          )}
+
+          {/* object-contain (not object-cover) so nothing is cropped */}
+          <img
+            alt={`Imagen ${index + 1} del producto, tamaño completo`}
+            className="max-h-full max-w-full cursor-default object-contain"
+            draggable={false}
+            onClick={(e) => e.stopPropagation()}
+            src={images[index]}
+          />
         </div>
       )}
     </div>
