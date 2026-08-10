@@ -264,9 +264,9 @@ if (!hasVariants || !selectedOptionId) return null;
             className="btn btn-primary btn-lg mt-6 w-full sm:w-fit"
             disabled={availableStock <= 0}
             onClick={handleAddToCart}
-            type="button"
+            type="button"Sin stock
           >
-            {availableStock <= 0 ? "Sin stock" : "Agregar al carrito"}
+            {availableStock <= 0 ? "Elegí una opción" : "Agregar al carrito"}
           </button>
 
           {reservedQuantity > 0 && (
