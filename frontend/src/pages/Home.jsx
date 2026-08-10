@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import heroImage from "../assets/background.png";
 import PageLoader from "../components/common/PageLoader";
+import FadeInOnScroll from "../components/common/FadeInOnScroll";
 import ProductGrid from "../components/products/ProductGrid";
 import { useCart } from "../context/CartContext";
 import { getProductsService } from "../services/productServices";
@@ -45,14 +46,19 @@ const Home = () => {
           className="pointer-events-none absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-primary/10 to-transparent blur-2xl"
         />
         <div className="hero-content relative flex-col gap-8 lg:flex-row-reverse">
-          <div className="h-[300px] w-[300px] shrink-0 overflow-hidden rounded-full border border-base-300/80 bg-white shadow-2xl lg:h-[360px] lg:w-[360px]">
+          {/* Logo — appears first with a smooth scale-up */}
+          <div
+            className="h-[300px] w-[300px] shrink-0 overflow-hidden rounded-full border border-base-300/80 bg-white shadow-2xl lg:h-[360px] lg:w-[360px] animate-scale-up animation-delay-100"
+          >
             <img
               alt="Aura Beauty logo"
               className="h-full w-full object-cover object-center"
               src={heroImage}
             />
           </div>
-          <div className="max-w-xl">
+
+          {/* Text + button block — animated as a single cohesive unit */}
+          <div className="max-w-xl animate-fade-up animation-delay-100">
             <span className="badge badge-primary badge-outline mb-4">
               Nuevo sitio web
             </span>
@@ -72,17 +78,21 @@ const Home = () => {
       </section>
 
       <section className="space-y-5" id="products">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
-              Catálogo
+        <FadeInOnScroll translateY={16} threshold={0.3}>
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
+                Catálogo
+              </p>
+              <h2 className="font-display text-3xl italic font-semibold">
+                Productos disponibles
+              </h2>
+            </div>
+            <p className="text-sm text-base-content/70">
+              Agregá productos y pasá directo al carrito para pagar.
             </p>
-            <h2 className="font-display text-3xl italic font-semibold">Productos disponibles</h2>
           </div>
-          <p className="text-sm text-base-content/70">
-            Agregá productos y pasá directo al carrito para pagar.
-          </p>
-        </div>
+        </FadeInOnScroll>
 
         {loading && <PageLoader message="Cargando productos..." />}
 

@@ -19,6 +19,17 @@
     #root {
         @apply min-h-screen;
     }
+
+    /* Respect users who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }
 
 @layer components {
@@ -30,5 +41,108 @@
     .input-no-spinner::-webkit-inner-spin-button {
         -webkit-appearance: none;
         margin: 0;
+    }
+}
+
+@layer utilities {
+    /* ── Keyframe definitions ────────────────────────────────────────── */
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes scaleUp {
+        from {
+            opacity: 0;
+            transform: scale(0.85);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes slideInFromLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-24px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* ── Animation utility classes (smooth ease-out curve) ────────────── */
+    .animate-fade-up {
+        animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.37, 1) forwards;
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.37, 1) forwards;
+    }
+
+    .animate-scale-up {
+        animation: scaleUp 0.6s cubic-bezier(0.22, 1, 0.37, 1) forwards;
+    }
+
+    .animate-slide-in-left {
+        animation: slideInFromLeft 0.7s cubic-bezier(0.22, 1, 0.37, 1) forwards;
+    }
+
+    /* ── Staggered animation delays (for sequenced appearing animations) ─ */
+    .animation-delay-75 {
+        animation-delay: 75ms;
+    }
+    .animation-delay-100 {
+        animation-delay: 100ms;
+    }
+    .animation-delay-150 {
+        animation-delay: 150ms;
+    }
+    .animation-delay-200 {
+        animation-delay: 200ms;
+    }
+    .animation-delay-300 {
+        animation-delay: 300ms;
+    }
+    .animation-delay-400 {
+        animation-delay: 400ms;
+    }
+    .animation-delay-500 {
+        animation-delay: 500ms;
+    }
+    .animation-delay-600 {
+        animation-delay: 600ms;
+    }
+    .animation-delay-700 {
+        animation-delay: 700ms;
+    }
+
+    /* ── Scroll-reveal utilities (used with IntersectionObserver) ──────── */
+    .scroll-animate {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.7s cubic-bezier(0.22, 1, 0.37, 1), transform 0.7s cubic-bezier(0.22, 1, 0.37, 1);
+    }
+
+    .scroll-animate-visible {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
