@@ -32,9 +32,7 @@ const ProductDetail = () => {
         if (isMounted) {
           setProduct(data);
           setQty(1);
-          // Auto-select the first option so the page is immediately usable
-          // without forcing an extra click for products with variants.
-          setSelectedOptionId(data.optionGroup?.options?.[0]?._id || null);
+          setSelectedOptionId(null);
         }
       } catch (err) {
         if (isMounted) setError(err.message);
@@ -53,15 +51,13 @@ const ProductDetail = () => {
   const hasVariants = Boolean(product?.optionGroup?.options?.length);
 
   const selectedOption = useMemo(() => {
-    if (!hasVariants) return null;
-    return (
-      product.optionGroup.options.find((o) => o._id === selectedOptionId) ||
-      product.optionGroup.options[0]
-    );
+if (!hasVariants || !selectedOptionId) return null;
+   return (
+     product.optionGroup.options.find((o) => o._id === selectedOptionId) ||
+     null
+   );
   }, [hasVariants, product, selectedOptionId]);
 
-  // Same source of truth ProductCard uses: don't let someone add more than
-  // is actually left once whatever's already in their cart is accounted for.
   const reservedQuantity = product
     ? getItemQuantity(product._id, selectedOption?._id || null)
     : 0;
@@ -219,7 +215,11 @@ const ProductDetail = () => {
           )}
 
           <p className="mt-4 text-sm">
-            {availableStock > 0 ? (
+            {hasVariants && !selectedOption ? (
+              <span className="text-base-content/70">
+                Elegí una opción para ver el stock disponible.
+              </span>
+            ) : availableStock > 0 ? (
               <span className="text-base-content/70">
                 Stock disponible: <strong>{availableStock}</strong>
               </span>
