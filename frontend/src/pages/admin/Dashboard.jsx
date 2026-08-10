@@ -44,6 +44,20 @@ const fileToDataUrl = (file) =>
   });
 
 const MAX_TOTAL_IMAGES = 9; // 1 main + up to 8 additional
+const MAX_OPTIONS = 12;
+
+let localOptionKeyCounter = 0;
+// Local-only key for React list rendering, since a brand new option has no
+// _id yet (the backend assigns one on save). Never sent to the API.
+const makeLocalOptionKey = () => `local-${++localOptionKeyCounter}`;
+
+const emptyOption = () => ({
+  _localKey: makeLocalOptionKey(),
+  _id: undefined,
+  label: "",
+  image: "",
+  stock: "",
+});
 
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
@@ -54,6 +68,8 @@ const Dashboard = () => {
   const [editingProductId, setEditingProductId] = useState(null);
   const [allImages, setAllImages] = useState([]);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [optionGroupName, setOptionGroupName] = useState("");
+  const [options, setOptions] = useState([]); // [] means "no variants"
   const {
     register,
     handleSubmit,
@@ -108,6 +124,16 @@ const Dashboard = () => {
     setEditingProductId(product._id);
     const images = [product.image, ...(product.images || [])];
     setAllImages(images);
+    setOptionGroupName(product.optionGroup?.name || "");
+    setOptions(
+      (product.optionGroup?.options || []).map((option) => ({
+        _localKey: makeLocalOptionKey(),
+        _id: option._id,
+        label: option.label,
+        image: option.image,
+        stock: String(option.stock),
+      })),
+    );
     reset({
       title: product.title,
       description: product.description,
@@ -122,6 +148,8 @@ const Dashboard = () => {
     setEditingProductId(null);
     setAllImages([]);
     setImageUrlInput("");
+    setOptionGroupName("");
+    setOptions([]);
     reset(emptyValues);
   };
 
@@ -172,10 +200,81 @@ const Dashboard = () => {
     setAllImages((current) => current.filter((_, i) => i !== index));
   };
 
+  const handleAddOption = () => {
+    if (options.length >= MAX_OPTIONS) {
+      toast.error(`Podés agregar hasta ${MAX_OPTIONS} opciones.`);
+      return;
+    }
+    setOptions((current) => [...current, emptyOption()]);
+  };
+
+  const handleRemoveOption = (localKey) => {
+    setOptions((current) => current.filter((o) => o._localKey !== localKey));
+  };
+
+  const handleOptionFieldChange = (localKey, field, value) => {
+    setOptions((current) =>
+      current.map((o) =>
+        o._localKey === localKey ? { ...o, [field]: value } : o,
+      ),
+    );
+  };
+
+  const handleOptionImageUpload = async (localKey, event) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Subí solamente archivos de imagen.");
+      return;
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      handleOptionFieldChange(localKey, "image", dataUrl);
+    } catch {
+      toast.error("No se pudo procesar la imagen seleccionada.");
+    }
+  };
+
   const onSubmit = async (values) => {
     if (allImages.length === 0) {
       toast.error("Agregá al menos una imagen para el producto.");
       return;
+    }
+
+    const hasAnyOptionInput =
+      optionGroupName.trim().length > 0 || options.length > 0;
+
+    let optionGroupPayload = null;
+
+    if (hasAnyOptionInput) {
+      if (!optionGroupName.trim()) {
+        toast.error("Ingresá un nombre para el grupo de opciones (ej: Color).");
+        return;
+      }
+      if (options.length === 0) {
+        toast.error("Agregá al menos una opción, o quitá el nombre del grupo si no querés usar opciones.");
+        return;
+      }
+      const incompleteOption = options.find(
+        (o) => !o.label.trim() || !o.image || o.stock === "",
+      );
+      if (incompleteOption) {
+        toast.error("Completá la etiqueta, imagen y stock de cada opción.");
+        return;
+      }
+
+      optionGroupPayload = {
+        name: optionGroupName.trim(),
+        options: options.map((o) => ({
+          ...(o._id ? { _id: o._id } : {}),
+          label: o.label.trim(),
+          image: o.image,
+          stock: Number(o.stock),
+        })),
+      };
     }
 
     try {
@@ -189,6 +288,7 @@ const Dashboard = () => {
         price: Number(values.price),
         stock: Number(values.stock),
         isActive: Boolean(values.isActive),
+        optionGroup: optionGroupPayload,
       };
 
       const response = editingProductId
@@ -369,6 +469,124 @@ const Dashboard = () => {
               </div>
             </div>
 
+            {/* ── Optional variant options (Color, Talle, etc.) ─────── */}
+            <div className="space-y-3 rounded-box border border-base-300 p-4">
+              <div>
+                <span className="label-text font-medium">
+                  Opciones del producto (opcional)
+                </span>
+                <p className="text-xs text-base-content/60">
+                  Usalo si el producto viene en distintas variantes — por
+                  ejemplo Color, Talle o Tipo. Cada opción tiene su propia
+                  imagen y su propio stock. El precio es el mismo para todas.
+                </p>
+              </div>
+
+              <div>
+                <label className="label" htmlFor="option-group-name">
+                  <span className="label-text">Nombre del grupo</span>
+                </label>
+                <input
+                  className="input input-bordered w-full"
+                  id="option-group-name"
+                  onChange={(e) => setOptionGroupName(e.target.value)}
+                  placeholder="Ej: Color, Talle, Tipo"
+                  type="text"
+                  value={optionGroupName}
+                />
+              </div>
+
+              {options.length > 0 && (
+                <div className="space-y-3">
+                  {options.map((option, index) => (
+                    <div
+                      className="flex flex-col gap-3 rounded-box border border-base-300 p-3 sm:flex-row sm:items-center"
+                      key={option._localKey}
+                    >
+                      {option.image ? (
+                        <img
+                          alt={option.label || `Opción ${index + 1}`}
+                          className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                          src={option.image}
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-dashed border-base-300 text-xs text-base-content/40">
+                          Sin foto
+                        </div>
+                      )}
+
+                      <div className="flex-1 space-y-2">
+                        <input
+                          className="input input-bordered input-sm w-full"
+                          onChange={(e) =>
+                            handleOptionFieldChange(
+                              option._localKey,
+                              "label",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Etiqueta (ej: Rojo)"
+                          type="text"
+                          value={option.label}
+                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input
+                            accept="image/*"
+                            className="hidden"
+                            id={`option-image-${option._localKey}`}
+                            onChange={(e) =>
+                              handleOptionImageUpload(option._localKey, e)
+                            }
+                            type="file"
+                          />
+                          <label
+                            className="btn btn-outline btn-xs"
+                            htmlFor={`option-image-${option._localKey}`}
+                          >
+                            {option.image ? "Cambiar imagen" : "Subir imagen"}
+                          </label>
+                          <input
+                            className="input input-bordered input-sm w-24"
+                            inputMode="numeric"
+                            min="0"
+                            onChange={(e) =>
+                              handleOptionFieldChange(
+                                option._localKey,
+                                "stock",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Stock"
+                            step="1"
+                            type="number"
+                            value={option.stock}
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        aria-label={`Quitar opción ${option.label || index + 1}`}
+                        className="btn btn-ghost btn-sm text-error self-start sm:self-center"
+                        onClick={() => handleRemoveOption(option._localKey)}
+                        type="button"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                className="btn btn-outline btn-sm"
+                disabled={options.length >= MAX_OPTIONS}
+                onClick={handleAddOption}
+                type="button"
+              >
+                + Agregar opción
+              </button>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="label" htmlFor="price">
@@ -417,6 +635,11 @@ const Dashboard = () => {
                 {errors.stock && (
                   <p className="mt-2 text-sm text-error">
                     {errors.stock.message}
+                  </p>
+                )}
+                {options.length > 0 && (
+                  <p className="mt-2 text-xs text-base-content/60">
+                    Se ignora: cada opción de abajo tiene su propio stock.
                   </p>
                 )}
               </div>
@@ -505,9 +728,25 @@ const Dashboard = () => {
                           <strong>{formatCurrency(product.price)}</strong>
                         </span>
                         <span>
-                          Stock: <strong>{product.stock}</strong>
+                          Stock:{" "}
+                          <strong>
+                            {product.optionGroup?.options?.length
+                              ? product.optionGroup.options.reduce(
+                                  (sum, o) => sum + o.stock,
+                                  0,
+                                )
+                              : product.stock}
+                          </strong>
                         </span>
                       </div>
+                      {product.optionGroup?.options?.length > 0 && (
+                        <p className="text-sm text-base-content/70">
+                          {product.optionGroup.name}:{" "}
+                          {product.optionGroup.options
+                            .map((o) => `${o.label} (${o.stock})`)
+                            .join(", ")}
+                        </p>
+                      )}
                       <div className="flex flex-wrap gap-3">
                         <button
                           className="btn btn-outline btn-sm"
@@ -609,6 +848,11 @@ const Dashboard = () => {
                         />
                         <div>
                           <p className="font-medium">{item.title}</p>
+                          {item.variantLabel && (
+                            <p className="text-sm text-base-content/60">
+                              {item.variantLabel}
+                            </p>
+                          )}
                           <p className="text-sm text-base-content/60">
                             x{item.quantity}
                           </p>

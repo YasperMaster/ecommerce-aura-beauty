@@ -11,6 +11,9 @@ const CartItemRow = ({ item, onDecrease, onIncrease, onRemove }) => {
 
       <div className="flex-1">
         <h2 className="text-lg font-semibold">{item.title}</h2>
+        {item.variantLabel && (
+          <p className="text-sm text-base-content/70">{item.variantLabel}</p>
+        )}
         <p className="text-sm text-base-content/70">
           Stock disponible: {item.stock}
         </p>

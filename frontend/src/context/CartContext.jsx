@@ -11,6 +11,12 @@ import { clearStoredCart, loadCart, saveCart } from "../utils/cartStorage";
 
 export const CartContext = createContext(null);
 
+// A cart line is identified by product id + variant option id (if any), so
+// "Red case" and "Blue case" of the same product can coexist as separate
+// lines. Products with no variants just use null here, same as before.
+const lineKey = (productId, variantOptionId = null) =>
+  variantOptionId ? `${productId}:${variantOptionId}` : productId;
+
 export const CartContextProvider = ({ children }) => {
   const { userInfo } = useUser();
   const userId = userInfo?.id || null;
@@ -30,11 +36,27 @@ export const CartContextProvider = ({ children }) => {
     saveCart(items, userId);
   }, [items, userId]);
 
-  const addItem = useCallback((product, quantity = 1) => {
+  /**
+   * @param {object} product - the product being added
+   * @param {number} quantity
+   * @param {object|null} selectedOption - the chosen variant option, e.g.
+   *   { _id, label, image, stock, groupName }, or null/undefined for a
+   *   product with no variants.
+   */
+  const addItem = useCallback((product, quantity = 1, selectedOption = null) => {
     const safeQuantity = Math.max(1, Math.trunc(quantity) || 1);
+    const variantOptionId = selectedOption?._id || null;
+    const itemStock = selectedOption ? selectedOption.stock : product.stock;
+    const itemImage = selectedOption ? selectedOption.image : product.image;
+    const variantLabel = selectedOption
+      ? `${selectedOption.groupName}: ${selectedOption.label}`
+      : "";
+    const key = lineKey(product._id, variantOptionId);
 
     setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product._id);
+      const existingItem = currentItems.find(
+        (item) => lineKey(item.id, item.variantOptionId) === key,
+      );
 
       if (!existingItem) {
         return [
@@ -44,51 +66,63 @@ export const CartContextProvider = ({ children }) => {
             slug: product.slug,
             title: product.title,
             price: product.price,
-            image: product.image,
-            stock: product.stock,
-            quantity: Math.min(safeQuantity, product.stock),
+            image: itemImage,
+            stock: itemStock,
+            quantity: Math.min(safeQuantity, itemStock),
+            variantOptionId,
+            variantLabel,
           },
         ];
       }
 
       return currentItems.map((item) => {
-        if (item.id !== product._id) {
+        if (lineKey(item.id, item.variantOptionId) !== key) {
           return item;
         }
 
         return {
           ...item,
-          stock: product.stock,
-          quantity: Math.min(item.quantity + safeQuantity, product.stock),
+          stock: itemStock,
+          quantity: Math.min(item.quantity + safeQuantity, itemStock),
         };
       });
     });
   }, []);
 
-  const removeItem = useCallback((productId) => {
+  const removeItem = useCallback((productId, variantOptionId = null) => {
+    const key = lineKey(productId, variantOptionId);
     setItems((currentItems) =>
-      currentItems.filter((item) => item.id !== productId),
+      currentItems.filter(
+        (item) => lineKey(item.id, item.variantOptionId) !== key,
+      ),
     );
   }, []);
 
-  const updateQuantity = useCallback((productId, nextQuantity) => {
-    setItems((currentItems) => {
-      if (nextQuantity <= 0) {
-        return currentItems.filter((item) => item.id !== productId);
-      }
+  const updateQuantity = useCallback(
+    (productId, nextQuantity, variantOptionId = null) => {
+      const key = lineKey(productId, variantOptionId);
 
-      return currentItems.map((item) => {
-        if (item.id !== productId) {
-          return item;
+      setItems((currentItems) => {
+        if (nextQuantity <= 0) {
+          return currentItems.filter(
+            (item) => lineKey(item.id, item.variantOptionId) !== key,
+          );
         }
 
-        return {
-          ...item,
-          quantity: Math.min(nextQuantity, item.stock),
-        };
+        return currentItems.map((item) => {
+          if (lineKey(item.id, item.variantOptionId) !== key) {
+            return item;
+          }
+
+          return {
+            ...item,
+            quantity: Math.min(nextQuantity, item.stock),
+          };
+        });
       });
-    });
-  }, []);
+    },
+    [],
+  );
 
   const syncProductStock = useCallback((products) => {
     setItems((currentItems) =>
@@ -100,6 +134,29 @@ export const CartContextProvider = ({ children }) => {
 
           if (!matchingProduct) {
             return item;
+          }
+
+          // Variant line: re-derive from that specific option's current
+          // stock/image, not the product's top-level fields. If the option
+          // was removed entirely, drop the line.
+          if (item.variantOptionId) {
+            const matchingOption = matchingProduct.optionGroup?.options?.find(
+              (option) => option._id === item.variantOptionId,
+            );
+
+            if (!matchingOption || matchingOption.stock <= 0) {
+              return null;
+            }
+
+            return {
+              ...item,
+              title: matchingProduct.title,
+              price: matchingProduct.price,
+              image: matchingOption.image,
+              stock: matchingOption.stock,
+              variantLabel: `${matchingProduct.optionGroup.name}: ${matchingOption.label}`,
+              quantity: Math.min(item.quantity, matchingOption.stock),
+            };
           }
 
           const nextQuantity = Math.min(item.quantity, matchingProduct.stock);
@@ -122,7 +179,13 @@ export const CartContextProvider = ({ children }) => {
   }, []);
 
   const getItemQuantity = useCallback(
-    (productId) => items.find((item) => item.id === productId)?.quantity || 0,
+    (productId, variantOptionId = null) => {
+      const key = lineKey(productId, variantOptionId);
+      return (
+        items.find((item) => lineKey(item.id, item.variantOptionId) === key)
+          ?.quantity || 0
+      );
+    },
     [items],
   );
 

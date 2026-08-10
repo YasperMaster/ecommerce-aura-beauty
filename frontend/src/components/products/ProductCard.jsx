@@ -9,12 +9,29 @@ const ProductCard = ({ product }) => {
   const { addItem, getItemQuantity } = useCart();
   const { isAuthenticated } = useUser();
 
-  const reservedQuantity = getItemQuantity(product._id);
-  const availableStock = Math.max(product.stock - reservedQuantity, 0);
+  const hasVariants = Boolean(product.optionGroup?.options?.length);
+
+  // For a product with variants, there's no single "stock" number that
+  // makes sense to reserve against here — each option has its own. Show
+  // the combined total just so the card isn't blank, but the actual
+  // reservation/selection happens on the product detail page.
+  const reservedQuantity = hasVariants ? 0 : getItemQuantity(product._id);
+  const availableStock = hasVariants
+    ? product.optionGroup.options.reduce((sum, o) => sum + o.stock, 0)
+    : Math.max(product.stock - reservedQuantity, 0);
+
+  const productUrl = `/product/${product._id}`;
 
   const handleAddToCart = (e) => {
     // stop propagation if event provided (button click)
     if (e && e.stopPropagation) e.stopPropagation();
+
+    if (hasVariants) {
+      // Ambiguous which option they want from the grid — send them to the
+      // product page where they can actually pick one.
+      navigate(productUrl);
+      return;
+    }
 
     if (!isAuthenticated) {
       toast.error("Iniciá sesión para agregar productos al carrito.");
@@ -31,8 +48,6 @@ const ProductCard = ({ product }) => {
     addItem(product);
     toast.success(`${product.title} agregado al carrito.`);
   };
-
-  const productUrl = `/product/${product._id}`;
 
   return (
     <article className="card h-full overflow-hidden rounded-box border border-base-300/80 bg-base-100/90 shadow-sm backdrop-blur transition-transform duration-200 hover:-translate-y-1 hover:shadow-md">
@@ -70,7 +85,7 @@ const ProductCard = ({ product }) => {
           onClick={handleAddToCart}
           type="button"
         >
-          Agregar
+          {hasVariants ? "Ver opciones" : "Agregar"}
         </button>
       </div>
     </article>

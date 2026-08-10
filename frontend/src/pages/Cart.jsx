@@ -30,6 +30,7 @@ const Cart = () => {
       const response = await createCheckoutPreferenceService(
         items.map((item) => ({
           productId: item.id,
+          variantOptionId: item.variantOptionId || undefined,
           quantity: item.quantity,
         })),
       );
@@ -69,10 +70,14 @@ const Cart = () => {
         {items.map((item) => (
           <CartItemRow
             item={item}
-            key={item.id}
-            onDecrease={() => updateQuantity(item.id, item.quantity - 1)}
-            onIncrease={() => updateQuantity(item.id, item.quantity + 1)}
-            onRemove={() => removeItem(item.id)}
+            key={`${item.id}:${item.variantOptionId || "default"}`}
+            onDecrease={() =>
+              updateQuantity(item.id, item.quantity - 1, item.variantOptionId)
+            }
+            onIncrease={() =>
+              updateQuantity(item.id, item.quantity + 1, item.variantOptionId)
+            }
+            onRemove={() => removeItem(item.id, item.variantOptionId)}
           />
         ))}
 

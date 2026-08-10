@@ -18,6 +18,7 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [qty, setQty] = useState(1);
+  const [selectedOptionId, setSelectedOptionId] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,6 +32,9 @@ const ProductDetail = () => {
         if (isMounted) {
           setProduct(data);
           setQty(1);
+          // Auto-select the first option so the page is immediately usable
+          // without forcing an extra click for products with variants.
+          setSelectedOptionId(data.optionGroup?.options?.[0]?._id || null);
         }
       } catch (err) {
         if (isMounted) setError(err.message);
@@ -46,19 +50,48 @@ const ProductDetail = () => {
     };
   }, [id]);
 
+  const hasVariants = Boolean(product?.optionGroup?.options?.length);
+
+  const selectedOption = useMemo(() => {
+    if (!hasVariants) return null;
+    return (
+      product.optionGroup.options.find((o) => o._id === selectedOptionId) ||
+      product.optionGroup.options[0]
+    );
+  }, [hasVariants, product, selectedOptionId]);
+
   // Same source of truth ProductCard uses: don't let someone add more than
   // is actually left once whatever's already in their cart is accounted for.
-  const reservedQuantity = product ? getItemQuantity(product._id) : 0;
-  const availableStock = product
-    ? Math.max(product.stock - reservedQuantity, 0)
+  const reservedQuantity = product
+    ? getItemQuantity(product._id, selectedOption?._id || null)
     : 0;
+  const stockForSelection = hasVariants
+    ? selectedOption?.stock ?? 0
+    : product?.stock ?? 0;
+  const availableStock = Math.max(stockForSelection - reservedQuantity, 0);
 
   const images = useMemo(() => {
     if (!product) return [];
-    // Combine the main image with any additional images so the first
-    // uploaded image (stored as product.image) is always shown.
-    return [product.image, ...(product.images || [])].filter(Boolean);
-  }, [product]);
+
+    // When a variant is selected, its own image leads the carousel so it's
+    // the first thing shown — the product's other photos still follow, in
+    // case someone wants to see the item's general angles/packaging too.
+    const base = [product.image, ...(product.images || [])].filter(Boolean);
+
+    if (selectedOption?.image) {
+      return [
+        selectedOption.image,
+        ...base.filter((src) => src !== selectedOption.image),
+      ];
+    }
+
+    return base;
+  }, [product, selectedOption]);
+
+  const handleSelectOption = (optionId) => {
+    setSelectedOptionId(optionId);
+    setQty(1);
+  };
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
@@ -67,13 +100,26 @@ const ProductDetail = () => {
       return;
     }
 
-    if (availableStock <= 0) {
-      toast.error("No hay más stock disponible para este producto.");
+    if (hasVariants && !selectedOption) {
+      toast.error("Elegí una opción antes de agregar al carrito.");
       return;
     }
 
-    addItem(product, qty);
-    toast.success(`${product.title} agregado al carrito.`);
+    if (availableStock <= 0) {
+      toast.error("No hay más stock disponible para esta opción.");
+      return;
+    }
+
+    const optionForCart = selectedOption
+      ? { ...selectedOption, groupName: product.optionGroup.name }
+      : null;
+
+    addItem(product, qty, optionForCart);
+    toast.success(
+      selectedOption
+        ? `${product.title} (${selectedOption.label}) agregado al carrito.`
+        : `${product.title} agregado al carrito.`,
+    );
   };
 
   if (loading) {
@@ -106,12 +152,15 @@ const ProductDetail = () => {
       </Link>
 
       <div className="mt-4 grid grid-cols-1 gap-10 lg:grid-cols-[1.4fr_1fr]">
-        {/* The photo is the star here — it gets the wider column and the
-            carousel is keyed by product id so switching between products
-            never leaves the slide index pointing at a stale, out-of-range
-            image from the previous product. */}
+        {/* The photo is the star here — it gets the wider column. Keyed by
+            product AND selected option so the carousel resets to slide 0
+            (showing that option's own image first) whenever the selection
+            changes, instead of staying on whatever slide index it was on. */}
         <div>
-          <ImageCarousel images={images} key={product._id} />
+          <ImageCarousel
+            images={images}
+            key={`${product._id}-${selectedOption?._id || "default"}`}
+          />
         </div>
 
         <div className="flex flex-col">
@@ -128,6 +177,46 @@ const ProductDetail = () => {
           <p className="mt-4 whitespace-pre-line text-base-content/80">
             {product.longDescription || product.description}
           </p>
+
+          {hasVariants && (
+            <div className="mt-6">
+              <span className="text-sm font-medium">
+                {product.optionGroup.name}
+                {selectedOption ? `: ${selectedOption.label}` : ""}
+              </span>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {product.optionGroup.options.map((option) => {
+                  const isSelected = option._id === selectedOption?._id;
+                  const isOutOfStock = option.stock <= 0;
+
+                  return (
+                    <button
+                      aria-label={`Elegir opción ${option.label}`}
+                      aria-pressed={isSelected}
+                      className={`flex flex-col items-center gap-1 rounded-box border-2 p-1.5 transition-colors ${
+                        isSelected
+                          ? "border-primary"
+                          : "border-base-300 hover:border-base-content/30"
+                      } ${isOutOfStock ? "opacity-40" : ""}`}
+                      disabled={isOutOfStock}
+                      key={option._id}
+                      onClick={() => handleSelectOption(option._id)}
+                      type="button"
+                    >
+                      <img
+                        alt={option.label}
+                        className="h-14 w-14 rounded-field object-cover"
+                        src={option.image}
+                      />
+                      <span className="max-w-16 truncate text-xs">
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <p className="mt-4 text-sm">
             {availableStock > 0 ? (
