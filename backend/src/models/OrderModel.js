@@ -33,6 +33,19 @@ const OrderItemSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    // Present only when the product had an option group (Color, Talle, etc.)
+    // and the customer picked a specific option.
+    variantOptionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    variantLabel: {
+      // e.g. "Color: Rojo" — denormalized so order history still reads
+      // correctly even if the product's options change or get removed later.
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   { _id: false },
 );

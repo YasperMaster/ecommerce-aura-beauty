@@ -4,7 +4,7 @@ import ProductModel from "../models/ProductModel.js";
 import { productSchema } from "../schemas/productSchema.js";
 
 const PUBLIC_PRODUCT_FIELDS =
-  "_id slug title description longDescription category image images price stock isActive";
+  "_id slug title description longDescription category image images price stock isActive optionGroup";
 const ADMIN_PRODUCT_FIELDS = `${PUBLIC_PRODUCT_FIELDS} createdAt updatedAt`;
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -47,6 +47,7 @@ const parseProductPayload = (body) =>
     price: body?.price,
     stock: body?.stock,
     isActive: body?.isActive,
+    optionGroup: body?.optionGroup ?? null,
   });
 
 const handleProductError = (res, error) => {
@@ -111,7 +112,11 @@ export const createProduct = async (req, res) => {
     const parsedData = parseProductPayload(req.body);
     const slug = await buildUniqueSlug(parsedData.title);
 
-    const product = await ProductModel.create({ ...parsedData, slug });
+    const product = await ProductModel.create({
+      ...parsedData,
+      slug,
+      optionGroup: parsedData.optionGroup || undefined,
+    });
 
     return res.status(201).json({
       message: "Producto creado correctamente.",
@@ -150,6 +155,8 @@ export const updateProduct = async (req, res) => {
     existingProduct.stock = parsedData.stock;
     existingProduct.isActive = parsedData.isActive;
     existingProduct.slug = slug;
+    existingProduct.optionGroup = parsedData.optionGroup || undefined;
+    existingProduct.markModified("optionGroup");
 
     await existingProduct.save();
 

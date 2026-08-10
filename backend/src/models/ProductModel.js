@@ -50,6 +50,56 @@ const ProductSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    // Optional product variants — e.g. Color, Talle, Tipo. A product either
+    // has no optionGroup at all (behaves exactly as before, using the
+    // top-level price/stock/image), or has one with 1+ options, each with
+    // its own image and its own stock count. Price stays the same across
+    // all options of a product.
+    optionGroup: {
+      type: new mongoose.Schema(
+        {
+          name: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 40,
+          },
+          options: {
+            type: [
+              new mongoose.Schema(
+                {
+                  label: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                    maxlength: 60,
+                  },
+                  image: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                  },
+                  stock: {
+                    type: Number,
+                    required: true,
+                    min: 0,
+                    default: 0,
+                  },
+                },
+                { _id: true },
+              ),
+            ],
+            validate: {
+              validator: (options) => options.length > 0,
+              message: "El grupo de opciones debe tener al menos una opción.",
+            },
+          },
+        },
+        { _id: false },
+      ),
+      required: false,
+      default: undefined,
+    },
     isActive: {
       type: Boolean,
       default: true,

@@ -156,7 +156,7 @@ const buildProductLookup = async (items) => {
   const products = await ProductModel.find({
     _id: { $in: productIds },
     isActive: true,
-  }).select("_id title category image price stock");
+  }).select("_id title category image price stock optionGroup");
 
   if (products.length !== productIds.length) return null;
 
@@ -167,6 +167,7 @@ const parseCheckoutPayload = (req) =>
   createCheckoutPreferenceSchema.parse({
     items: (req.body?.items || []).map((item) => ({
       productId: item.productId,
+      variantOptionId: item.variantOptionId || undefined,
       quantity: Number(item.quantity),
     })),
   });
@@ -179,35 +180,60 @@ const parseCheckoutPayload = (req) =>
  * race condition where two customers could check out the same last item
  * simultaneously.
  *
+ * For items with a variantOptionId, decrements that specific option's stock
+ * (via arrayFilters) instead of the product's top-level stock field.
+ *
  * Returns true if all items were reserved, false otherwise (with rollback).
  */
 const reserveStock = async (order) => {
   const decremented = [];
 
   for (const item of order.items) {
-    const result = await ProductModel.updateOne(
-      { _id: item.product, stock: { $gte: item.quantity } },
-      { $inc: { stock: -item.quantity } },
-    );
+    const result = item.variantOptionId
+      ? await ProductModel.updateOne(
+          {
+            _id: item.product,
+            "optionGroup.options": {
+              $elemMatch: { _id: item.variantOptionId, stock: { $gte: item.quantity } },
+            },
+          },
+          { $inc: { "optionGroup.options.$[opt].stock": -item.quantity } },
+          { arrayFilters: [{ "opt._id": item.variantOptionId }] },
+        )
+      : await ProductModel.updateOne(
+          { _id: item.product, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } },
+        );
 
     if (result.modifiedCount === 0) {
       // This item doesn't have enough stock — rollback previous decrements
       logger.warn(
-        { orderId: order._id, productId: item.product },
+        { orderId: order._id, productId: item.product, variantOptionId: item.variantOptionId },
         "Stock reservation failed — insufficient stock, rolling back",
       );
 
       for (const d of decremented) {
-        await ProductModel.updateOne(
-          { _id: d.product },
-          { $inc: { stock: d.quantity } },
-        );
+        if (d.variantOptionId) {
+          await ProductModel.updateOne(
+            { _id: d.product, "optionGroup.options._id": d.variantOptionId },
+            { $inc: { "optionGroup.options.$.stock": d.quantity } },
+          );
+        } else {
+          await ProductModel.updateOne(
+            { _id: d.product },
+            { $inc: { stock: d.quantity } },
+          );
+        }
       }
 
       return false;
     }
 
-    decremented.push({ product: item.product, quantity: item.quantity });
+    decremented.push({
+      product: item.product,
+      quantity: item.quantity,
+      variantOptionId: item.variantOptionId,
+    });
   }
 
   return true;
@@ -217,12 +243,21 @@ const reserveStock = async (order) => {
  * Restore stock for an order (e.g. when payment is rejected or cancelled).
  */
 const restoreStock = async (order) => {
-  const operations = order.items.map((item) => ({
-    updateOne: {
-      filter: { _id: item.product },
-      update: { $inc: { stock: item.quantity } },
-    },
-  }));
+  const operations = order.items.map((item) =>
+    item.variantOptionId
+      ? {
+          updateOne: {
+            filter: { _id: item.product, "optionGroup.options._id": item.variantOptionId },
+            update: { $inc: { "optionGroup.options.$.stock": item.quantity } },
+          },
+        }
+      : {
+          updateOne: {
+            filter: { _id: item.product },
+            update: { $inc: { stock: item.quantity } },
+          },
+        },
+  );
 
   if (operations.length > 0) {
     await ProductModel.bulkWrite(operations);
@@ -371,20 +406,57 @@ export const createMercadoPagoPreference = async (req, res) => {
           .json({ message: "Uno o más productos no están disponibles." });
       }
 
-      if (product.stock < item.quantity) {
-        return res.status(400).json({
-          message: `No hay stock suficiente para "${product.title}".`,
+      const hasVariants = Boolean(product.optionGroup?.options?.length);
+
+      if (hasVariants) {
+        if (!item.variantOptionId) {
+          return res.status(400).json({
+            message: `Elegí una opción para "${product.title}" antes de continuar.`,
+          });
+        }
+
+        const selectedOption = product.optionGroup.options.find(
+          (option) => option._id.toString() === item.variantOptionId,
+        );
+
+        if (!selectedOption) {
+          return res.status(400).json({
+            message: `La opción elegida para "${product.title}" ya no está disponible.`,
+          });
+        }
+
+        if (selectedOption.stock < item.quantity) {
+          return res.status(400).json({
+            message: `No hay stock suficiente para "${product.title}" (${selectedOption.label}).`,
+          });
+        }
+
+        orderItems.push({
+          product: product._id,
+          title: product.title,
+          image: selectedOption.image,
+          category: product.category || "",
+          quantity: item.quantity,
+          unitPrice: product.price,
+          variantOptionId: selectedOption._id,
+          variantLabel: `${product.optionGroup.name}: ${selectedOption.label}`,
+        });
+      } else {
+        if (product.stock < item.quantity) {
+          return res.status(400).json({
+            message: `No hay stock suficiente para "${product.title}".`,
+          });
+        }
+
+        orderItems.push({
+          product: product._id,
+          title: product.title,
+          image: product.image,
+          category: product.category || "",
+          quantity: item.quantity,
+          unitPrice: product.price,
         });
       }
-
-      orderItems.push({
-        product: product._id,
-        title: product.title,
-        image: product.image,
-        category: product.category || "",
-        quantity: item.quantity,
-        unitPrice: product.price,
-      });
 
       totalAmount += product.price * item.quantity;
     }
