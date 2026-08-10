@@ -286,7 +286,7 @@ const Dashboard = () => {
         image: allImages[0],
         images: allImages.slice(1),
         price: Number(values.price),
-        stock: Number(values.stock),
+        stock: options.length > 0 ? 0 : Number(values.stock),
         isActive: Boolean(values.isActive),
         optionGroup: optionGroupPayload,
       };
@@ -619,13 +619,19 @@ const Dashboard = () => {
                 </label>
                 <input
                   {...register("stock", {
-                    required: "Ingresá el stock.",
+                    required: 
+                      options.length === 0 ? "Ingresá el stock." : false,
                     min: {
                       value: 0,
                       message: "El stock no puede ser negativo.",
                     },
                   })}
-                  className="input input-bordered input-no-spinner w-full"
+                  className={`input input-bordered input-no-spinner w-full ${
+                    options.length > 0
+                      ? "cursor-not-allowed bg-base-200 text-base-content/40"
+                      : ""
+                  }`}
+                  disabled={options.length > 0}
                   id="stock"
                   inputMode="numeric"
                   min="0"
