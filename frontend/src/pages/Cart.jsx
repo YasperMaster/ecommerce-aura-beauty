@@ -50,7 +50,7 @@ const Cart = () => {
         <p className="mt-3 text-base-content/70">
           Agregá productos del catálogo para iniciar tu compra.
         </p>
-        <Link className="btn btn-primary mt-6" to="/">
+        <Link className="btn btn-primary mt-6" to="/products">
           Explorar productos
         </Link>
       </section>
@@ -83,7 +83,7 @@ const Cart = () => {
 
         <Link
           className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-          to="/"
+          to="/products"
         >
           ← Añadí más productos
         </Link>

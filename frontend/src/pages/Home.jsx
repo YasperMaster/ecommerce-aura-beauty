@@ -32,11 +32,18 @@ const Home = () => {
     loadProducts();
   }, [loadProducts]);
 
+  // When arriving on /products, scroll to the products section.
+  // Layout also scrolls to top on pathname change; since React runs
+  // child effects before parent effects, we defer ours so it takes
+  // precedence over the parent's scroll-to-top.
   useEffect(() => {
     if (pathname === "/products") {
-      document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+      const timer = setTimeout(() => {
+        document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [pathname, loading]);
+  }, [pathname]);
 
   return (
     <div className="space-y-10 py-10">
