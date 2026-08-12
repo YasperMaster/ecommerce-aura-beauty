@@ -51,13 +51,15 @@ const ProductDetail = () => {
   const hasVariants = Boolean(product?.optionGroup?.options?.length);
 
   const selectedOption = useMemo(() => {
-if (!hasVariants || !selectedOptionId) return null;
-   return (
-     product.optionGroup.options.find((o) => o._id === selectedOptionId) ||
-     null
-   );
+    if (!hasVariants || !selectedOptionId) return null;
+    return (
+      product.optionGroup.options.find((o) => o._id === selectedOptionId) ||
+      null
+    );
   }, [hasVariants, product, selectedOptionId]);
 
+  // Same source of truth ProductCard uses: don't let someone add more than
+  // is actually left once whatever's already in their cart is accounted for.
   const reservedQuantity = product
     ? getItemQuantity(product._id, selectedOption?._id || null)
     : 0;
@@ -111,11 +113,7 @@ if (!hasVariants || !selectedOptionId) return null;
       : null;
 
     addItem(product, qty, optionForCart);
-    toast.success(
-      selectedOption
-        ? `${product.title} (${selectedOption.label}) agregado al carrito.`
-        : `${product.title} agregado al carrito.`,
-    );
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (loading) {
@@ -264,9 +262,13 @@ if (!hasVariants || !selectedOptionId) return null;
             className="btn btn-primary btn-lg mt-6 w-full sm:w-fit"
             disabled={availableStock <= 0}
             onClick={handleAddToCart}
-            type="button"Sin stock
+            type="button"
           >
-            {availableStock <= 0 ? "Elegí una opción" : "Agregar al carrito"}
+            {hasVariants && !selectedOption
+              ? "Elegí una opción"
+              : availableStock <= 0
+                ? "Sin stock"
+                : "Agregar al carrito"}
           </button>
 
           {reservedQuantity > 0 && (

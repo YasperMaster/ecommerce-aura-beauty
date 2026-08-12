@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { HiHome, HiSparkles } from "react-icons/hi2";
 import { Link } from "react-router";
+import { useCart } from "../../context/CartContext";
 import { useUser } from "../../context/UserContext";
 import AuthButtons from "./AuthButtons";
 import Cart from "./Cart";
@@ -13,8 +14,27 @@ const HIDE_ON_DELTA = 5;
 
 const Navbar = () => {
   const { isAuthenticated, userInfo, loading } = useUser();
+  const { cartPulseKey, itemCount } = useCart();
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollYRef = useRef(0);
+  const isFirstPulseRef = useRef(true);
+  const itemCountRef = useRef(itemCount);
+
+  useEffect(() => {
+    itemCountRef.current = itemCount;
+  }, [itemCount]);
+
+  // If the navbar is currently hidden (scrolled away) when an item gets
+  // added to the cart, bring it back so the cart icon's animation is
+  // actually visible instead of happening off-screen.
+  useEffect(() => {
+    if (isFirstPulseRef.current) {
+      isFirstPulseRef.current = false;
+      return;
+    }
+    if (itemCountRef.current <= 0) return;
+    setIsVisible(true);
+  }, [cartPulseKey]);
 
   useEffect(() => {
     // Seed the ref with the current scroll position so the first scroll

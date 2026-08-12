@@ -46,7 +46,6 @@ const ProductCard = ({ product }) => {
     }
 
     addItem(product);
-    toast.success(`${product.title} agregado al carrito.`);
   };
 
   return (

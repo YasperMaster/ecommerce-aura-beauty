@@ -26,6 +26,11 @@ export const CartContextProvider = ({ children }) => {
   // from that user's localStorage key so carts don't leak between accounts.
   const [items, setItems] = useState(() => loadCart(userId));
 
+  // Bumped every time addItem succeeds. The navbar and cart icon watch this
+  // to reveal the navbar if it's currently hidden (scrolled away) and to
+  // play a short "look here" animation on the cart icon.
+  const [cartPulseKey, setCartPulseKey] = useState(0);
+
   // Reload cart from storage whenever the user identity changes
   useEffect(() => {
     setItems(loadCart(userId));
@@ -87,6 +92,8 @@ export const CartContextProvider = ({ children }) => {
         };
       });
     });
+
+    setCartPulseKey((key) => key + 1);
   }, []);
 
   const removeItem = useCallback((productId, variantOptionId = null) => {
@@ -206,6 +213,7 @@ export const CartContextProvider = ({ children }) => {
       items,
       subtotal,
       itemCount,
+      cartPulseKey,
       addItem,
       removeItem,
       updateQuantity,
@@ -215,6 +223,7 @@ export const CartContextProvider = ({ children }) => {
     };
   }, [
     items,
+    cartPulseKey,
     addItem,
     removeItem,
     updateQuantity,
