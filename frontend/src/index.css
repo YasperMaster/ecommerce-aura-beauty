@@ -55,7 +55,7 @@
         inset: 0;
         z-index: 0;
         border-radius: inherit;
-        background-image: radial-gradient(closest-corner at center, currentColor 0%, transparent 85%);
+        background-image: radial-gradient(circle at center, currentColor 0%, transparent 80%);
         pointer-events: none;
     }
 
@@ -138,23 +138,23 @@
 
     @keyframes auraGlowSubtle {
         0%, 100% {
-            opacity: 0.18;
-            filter: blur(0.3rem);
+            opacity: 0.28;
+            filter: blur(0.35rem);
         }
         50% {
-            opacity: 0.4;
-            filter: blur(0.5rem);
+            opacity: 0.55;
+            filter: blur(0.6rem);
         }
     }
 
     @keyframes auraGlowSubtleAfter {
         0%, 100% {
-            opacity: 0.08;
-            filter: blur(0.8rem);
+            opacity: 0.14;
+            filter: blur(0.9rem);
         }
         50% {
-            opacity: 0.22;
-            filter: blur(1.2rem);
+            opacity: 0.32;
+            filter: blur(1.4rem);
         }
     }
 
