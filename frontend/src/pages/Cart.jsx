@@ -50,7 +50,7 @@ const Cart = () => {
         <p className="mt-3 text-base-content/70">
           Agregá productos del catálogo para iniciar tu compra.
         </p>
-        <Link className="btn btn-primary mt-6" to="/products">
+        <Link className="btn btn-primary mt-6" to="/">
           Explorar productos
         </Link>
       </section>
@@ -83,7 +83,7 @@ const Cart = () => {
 
         <Link
           className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-          to="/products"
+          to="/"
         >
           ← Añadí más productos
         </Link>
@@ -110,14 +110,18 @@ const Cart = () => {
           </div>
         )}
 
-        <button
-          className="btn btn-primary w-full"
-          disabled={isSubmitting}
-          onClick={handleCheckout}
-          type="button"
+        <div
+          className={`w-full ${!isSubmitting ? "aura-glow-wrap text-primary" : ""}`}
         >
-          {isSubmitting ? "Redirigiendo..." : "Pagar"}
-        </button>
+          <button
+            className="btn btn-primary w-full"
+            disabled={isSubmitting}
+            onClick={handleCheckout}
+            type="button"
+          >
+            {isSubmitting ? "Redirigiendo..." : "Pagar"}
+          </button>
+        </div>
         <button
           className="btn btn-ghost mt-3 w-full"
           onClick={clearCart}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import PageLoader from "../../components/common/PageLoader";
@@ -62,6 +62,11 @@ const emptyOption = () => ({
   stock: "",
 });
 
+const totalStockFor = (product) =>
+  product.optionGroup?.options?.length
+    ? product.optionGroup.options.reduce((sum, o) => sum + o.stock, 0)
+    : product.stock;
+
 const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -73,6 +78,8 @@ const Dashboard = () => {
   const [imageUrlInput, setImageUrlInput] = useState("");
   const [optionGroupName, setOptionGroupName] = useState("");
   const [options, setOptions] = useState([]); // [] means "no variants"
+  const [activeTab, setActiveTab] = useState("products"); // "products" | "orders"
+  const formDialogRef = useRef(null);
   const {
     register,
     handleSubmit,
@@ -123,7 +130,21 @@ const Dashboard = () => {
     [orders],
   );
 
-  const startEditing = (product) => {
+  const resetFormState = () => {
+    setEditingProductId(null);
+    setAllImages([]);
+    setImageUrlInput("");
+    setOptionGroupName("");
+    setOptions([]);
+    reset(emptyValues);
+  };
+
+  const openCreateModal = () => {
+    resetFormState();
+    formDialogRef.current?.showModal();
+  };
+
+  const openEditModal = (product) => {
     setEditingProductId(product._id);
     const images = [product.image, ...(product.images || [])];
     setAllImages(images);
@@ -144,16 +165,12 @@ const Dashboard = () => {
       stock: String(product.stock),
       isActive: product.isActive,
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    formDialogRef.current?.showModal();
   };
 
-  const stopEditing = () => {
-    setEditingProductId(null);
-    setAllImages([]);
-    setImageUrlInput("");
-    setOptionGroupName("");
-    setOptions([]);
-    reset(emptyValues);
+  const closeModal = () => {
+    formDialogRef.current?.close();
+    resetFormState();
   };
 
   const handleImagesUpload = async (event) => {
@@ -300,7 +317,7 @@ const Dashboard = () => {
         : await createProductService(payload);
 
       toast.success(response.message);
-      stopEditing();
+      closeModal();
       await loadProducts();
     } catch (error) {
       toast.error(error.message);
@@ -318,7 +335,7 @@ const Dashboard = () => {
     try {
       const response = await deleteProductService(productId);
       toast.success(response.message);
-      if (editingProductId === productId) stopEditing();
+      if (editingProductId === productId) closeModal();
       await loadProducts();
     } catch (error) {
       toast.error(error.message);
@@ -326,29 +343,229 @@ const Dashboard = () => {
   };
 
   return (
-    <section className="space-y-10 py-10">
-      <div className="grid gap-8 xl:grid-cols-[0.95fr_1.25fr]">
-        {/* ── Form ─────────────────────────────────────────── */}
-        <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm xl:sticky xl:top-6 xl:h-fit">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
-                Panel de administrador
-              </p>
-              <h1 className="text-3xl font-bold">Cargá un producto</h1>
-            </div>
-            {editingProductId && (
-              <button
-                className="btn btn-ghost"
-                onClick={stopEditing}
-                type="button"
-              >
-                Cancelar edición
-              </button>
-            )}
+    <section className="space-y-6 py-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
+            Panel de administrador
+          </p>
+          <h1 className="text-3xl font-bold">Gestioná tu tienda</h1>
+        </div>
+
+        <div role="tablist" className="tabs tabs-boxed w-fit">
+          <button
+            aria-selected={activeTab === "products"}
+            className={`tab ${activeTab === "products" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("products")}
+            role="tab"
+            type="button"
+          >
+            Productos ({products.length})
+          </button>
+          <button
+            aria-selected={activeTab === "orders"}
+            className={`tab ${activeTab === "orders" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("orders")}
+            role="tab"
+            type="button"
+          >
+            Órdenes ({orders.length})
+          </button>
+        </div>
+      </div>
+
+      {/* ── Productos ─────────────────────────────────────── */}
+      {activeTab === "products" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold">Inventario</h2>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={openCreateModal}
+              type="button"
+            >
+              + Nuevo producto
+            </button>
           </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+          {productsLoading ? (
+            <PageLoader message="Cargando inventario..." />
+          ) : sortedProducts.length === 0 ? (
+            <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
+              Todavía no hay productos creados.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sortedProducts.map((product) => (
+                <article
+                  className="flex flex-col overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-sm"
+                  key={product._id}
+                >
+                  <div className="relative aspect-[4/3]">
+                    <img
+                      alt={product.title}
+                      className="h-full w-full object-cover"
+                      src={product.image}
+                    />
+                    <span
+                      className={`badge badge-sm absolute right-2 top-2 ${
+                        product.isActive ? "badge-success" : "badge-ghost"
+                      }`}
+                    >
+                      {product.isActive ? "Visible" : "Oculto"}
+                    </span>
+                    {product.images?.length > 0 && (
+                      <span className="badge badge-neutral badge-sm absolute left-2 top-2">
+                        +{product.images.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1.5 p-3">
+                    <h3 className="line-clamp-1 font-semibold" title={product.title}>
+                      {product.title}
+                    </h3>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-semibold text-primary">
+                        {formatCurrency(product.price)}
+                      </span>
+                      <span className="text-base-content/60">
+                        Stock: {totalStockFor(product)}
+                      </span>
+                    </div>
+                    {product.optionGroup?.options?.length > 0 && (
+                      <p
+                        className="line-clamp-1 text-xs text-base-content/60"
+                        title={`${product.optionGroup.name}: ${product.optionGroup.options
+                          .map((o) => o.label)
+                          .join(", ")}`}
+                      >
+                        {product.optionGroup.name}:{" "}
+                        {product.optionGroup.options
+                          .map((o) => o.label)
+                          .join(", ")}
+                      </p>
+                    )}
+                    <div className="mt-auto flex gap-2 pt-2">
+                      <button
+                        className="btn btn-outline btn-xs flex-1"
+                        onClick={() => openEditModal(product)}
+                        type="button"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-outline btn-error btn-xs flex-1"
+                        onClick={() => handleDelete(product._id)}
+                        type="button"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Órdenes ───────────────────────────────────────── */}
+      {activeTab === "orders" && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Órdenes recientes</h2>
+
+          {ordersLoading ? (
+            <PageLoader message="Cargando órdenes..." />
+          ) : sortedOrders.length === 0 ? (
+            <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
+              Aún no se registraron compras.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {sortedOrders.map((order) => (
+                <article
+                  className="rounded-box border border-base-300 bg-base-100 p-3 shadow-sm"
+                  key={order._id}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="line-clamp-1 text-sm font-semibold">
+                        {order.user?.fullName || order.fullName || order.userEmail}
+                      </h3>
+                      <p className="line-clamp-1 text-xs text-base-content/60">
+                        {order.userEmail}
+                      </p>
+                    </div>
+                    <span
+                      className={`badge badge-sm shrink-0 ${
+                        STATUS_BADGE_CLASS[order.status] || "badge-ghost"
+                      }`}
+                    >
+                      {STATUS_LABEL[order.status] || order.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-base-content/70">
+                    <span>
+                      Total:{" "}
+                      <strong className="text-base-content">
+                        {formatCurrency(order.totalAmount)}
+                      </strong>
+                    </span>
+                    <span>{order.userPhone || "Sin teléfono"}</span>
+                    <span>{formatDateTime(order.createdAt)}</span>
+                  </div>
+
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                    {order.items.map((item, index) => (
+                      <div
+                        className="flex shrink-0 items-center gap-2 rounded-box bg-base-200 p-2"
+                        key={`${order._id}-${index}`}
+                      >
+                        <img
+                          alt={item.title}
+                          className="h-10 w-10 rounded-lg object-cover"
+                          src={item.image}
+                        />
+                        <div className="text-xs">
+                          <p className="line-clamp-1 max-w-24 font-medium">
+                            {item.title}
+                          </p>
+                          {item.variantLabel && (
+                            <p className="line-clamp-1 max-w-24 text-base-content/60">
+                              {item.variantLabel}
+                            </p>
+                          )}
+                          <p className="text-base-content/60">x{item.quantity}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Create/Edit product modal ────────────────────────── */}
+      <dialog className="modal" ref={formDialogRef}>
+        <div className="modal-box max-w-2xl">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold">
+              {editingProductId ? "Editar producto" : "Cargá un producto"}
+            </h2>
+            <button
+              aria-label="Cerrar"
+              className="btn btn-ghost btn-sm btn-circle"
+              onClick={closeModal}
+              type="button"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className="label" htmlFor="title">
                 <span className="label-text">Título</span>
@@ -385,7 +602,7 @@ const Dashboard = () => {
                     message: "Debe tener al menos 10 caracteres.",
                   },
                 })}
-                className="textarea textarea-bordered min-h-28 w-full"
+                className="textarea textarea-bordered min-h-20 w-full"
                 id="description"
                 placeholder="Descripción comercial del producto"
               />
@@ -397,7 +614,7 @@ const Dashboard = () => {
             </div>
 
             {/* ── Unified images section ─────────────────── */}
-            <div className="space-y-3 rounded-box border border-base-300 p-4">
+            <div className="space-y-3 rounded-box border border-base-300 p-3">
               <div>
                 <span className="label-text font-medium">
                   Imágenes del producto
@@ -435,7 +652,7 @@ const Dashboard = () => {
               )}
 
               {/* Custom file input with Spanish labels */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <input
                   accept="image/*"
                   className="hidden"
@@ -446,7 +663,7 @@ const Dashboard = () => {
                   type="file"
                 />
                 <label
-                  className={`btn btn-outline ${allImages.length >= MAX_TOTAL_IMAGES ? "btn-disabled" : ""}`}
+                  className={`btn btn-outline btn-sm ${allImages.length >= MAX_TOTAL_IMAGES ? "btn-disabled" : ""}`}
                   htmlFor="image-upload"
                 >
                   Seleccionar imágenes
@@ -459,8 +676,15 @@ const Dashboard = () => {
               </div>
 
               <div className="flex gap-2">
+                <input
+                  className="input input-bordered input-sm flex-1"
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  placeholder="O pegá una URL de imagen"
+                  type="text"
+                  value={imageUrlInput}
+                />
                 <button
-                  className="btn btn-outline"
+                  className="btn btn-outline btn-sm"
                   disabled={
                     !imageUrlInput.trim() ||
                     allImages.length >= MAX_TOTAL_IMAGES
@@ -474,7 +698,7 @@ const Dashboard = () => {
             </div>
 
             {/* ── Optional variant options (Color, Talle, etc.) ─────── */}
-            <div className="space-y-3 rounded-box border border-base-300 p-4">
+            <div className="space-y-3 rounded-box border border-base-300 p-3">
               <div>
                 <span className="label-text font-medium">
                   Opciones del producto (opcional)
@@ -491,7 +715,7 @@ const Dashboard = () => {
                   <span className="label-text">Nombre del grupo</span>
                 </label>
                 <input
-                  className="input input-bordered w-full"
+                  className="input input-bordered input-sm w-full"
                   id="option-group-name"
                   onChange={(e) => setOptionGroupName(capitalizeFirst(e.target.value))}
                   placeholder="Ej: Color, Talle, Tipo"
@@ -623,7 +847,7 @@ const Dashboard = () => {
                 </label>
                 <input
                   {...register("stock", {
-                    required: 
+                    required:
                       options.length === 0 ? "Ingresá el stock." : false,
                     min: {
                       value: 0,
@@ -666,216 +890,34 @@ const Dashboard = () => {
               </span>
             </label>
 
-            <button
-              className="btn btn-primary w-full"
-              disabled={submitting}
-              type="submit"
-            >
-              {submitting
-                ? "Guardando..."
-                : editingProductId
-                  ? "Actualizar producto"
-                  : "Crear producto"}
-            </button>
+            <div className="modal-action mt-2">
+              <button
+                className="btn btn-ghost"
+                onClick={closeModal}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={submitting}
+                type="submit"
+              >
+                {submitting
+                  ? "Guardando..."
+                  : editingProductId
+                    ? "Actualizar producto"
+                    : "Crear producto"}
+              </button>
+            </div>
           </form>
         </div>
-
-        {/* ── Product list ─────────────────────────────────── */}
-        <div className="space-y-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
-              Inventario
-            </p>
-            <h2 className="text-3xl font-bold">Productos cargados</h2>
-          </div>
-
-          {productsLoading ? (
-            <PageLoader message="Cargando inventario..." />
-          ) : sortedProducts.length === 0 ? (
-            <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
-              Todavía no hay productos creados.
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {sortedProducts.map((product) => (
-                <article
-                  className="rounded-box border border-base-300 bg-base-100 p-4 shadow-sm"
-                  key={product._id}
-                >
-                  <div className="flex flex-col gap-4 md:flex-row">
-                    <div className="flex flex-col items-start gap-2 md:w-40">
-                      <img
-                        alt={product.title}
-                        className="h-32 w-full rounded-2xl object-cover"
-                        src={product.image}
-                      />
-                      {product.images?.length > 0 && (
-                        <span className="badge badge-neutral badge-sm">
-                          +{product.images.length} foto
-                          {product.images.length > 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        <div>
-                          <h3 className="text-xl font-semibold">
-                            {product.title}
-                          </h3>
-                          <p className="mt-1 text-sm text-base-content/70">
-                            {product.description}
-                          </p>
-                        </div>
-                        <span
-                          className={`badge ${product.isActive ? "badge-success" : "badge-ghost"}`}
-                        >
-                          {product.isActive ? "Visible" : "Oculto"}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-4 text-sm text-base-content/70">
-                        <span>
-                          Precio:{" "}
-                          <strong>{formatCurrency(product.price)}</strong>
-                        </span>
-                        <span>
-                          Stock:{" "}
-                          <strong>
-                            {product.optionGroup?.options?.length
-                              ? product.optionGroup.options.reduce(
-                                  (sum, o) => sum + o.stock,
-                                  0,
-                                )
-                              : product.stock}
-                          </strong>
-                        </span>
-                      </div>
-                      {product.optionGroup?.options?.length > 0 && (
-                        <p className="text-sm text-base-content/70">
-                          {product.optionGroup.name}:{" "}
-                          {product.optionGroup.options
-                            .map((o) => `${o.label} (${o.stock})`)
-                            .join(", ")}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          className="btn btn-outline btn-sm"
-                          onClick={() => startEditing(product)}
-                          type="button"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          className="btn btn-outline btn-error btn-sm"
-                          onClick={() => handleDelete(product._id)}
-                          type="button"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Orders ─────────────────────────────────────────── */}
-      <div className="space-y-4">
-        <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-base-content/60">
-            Ventas
-          </p>
-          <h2 className="text-3xl font-bold">Órdenes recientes</h2>
-        </div>
-
-        {ordersLoading ? (
-          <PageLoader message="Cargando órdenes..." />
-        ) : sortedOrders.length === 0 ? (
-          <div className="rounded-box border border-base-300 bg-base-100 p-6 shadow-sm">
-            Aún no se registraron compras.
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {sortedOrders.map((order) => (
-              <article
-                className="rounded-box border border-base-300 bg-base-100 p-4 shadow-sm"
-                key={order._id}
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm text-base-content/60">
-                      Orden #{order._id}
-                    </p>
-                    <h3 className="text-lg font-semibold">
-                      {order.user?.fullName || order.fullName || order.userEmail}
-                    </h3>
-                    <p className="text-sm text-base-content/70">
-                      {order.userEmail}
-                    </p>
-                    <div className="flex flex-wrap gap-3 text-sm text-base-content/70">
-                      <span>
-                        Teléfono:{" "}
-                        <strong>{order.userPhone || "No informado"}</strong>
-                      </span>
-                      <span>
-                        Total:{" "}
-                        <strong>{formatCurrency(order.totalAmount)}</strong>
-                      </span>
-                      <span>
-                        Estado:{" "}
-                        <strong>
-                          {STATUS_LABEL[order.status] || order.status}
-                        </strong>
-                      </span>
-                      <span>
-                        Fecha:{" "}
-                        <strong>{formatDateTime(order.createdAt)}</strong>
-                      </span>
-                    </div>
-                  </div>
-                  <span
-                    className={`badge badge-lg ${
-                      STATUS_BADGE_CLASS[order.status] || "badge-ghost"
-                    }`}
-                  >
-                    {STATUS_LABEL[order.status] || order.status}
-                  </span>
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                  {order.items.map((item, index) => (
-                    <div
-                      className="rounded-box bg-base-200 p-3"
-                      key={`${order._id}-${index}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          alt={item.title}
-                          className="h-14 w-14 rounded-xl object-cover"
-                          src={item.image}
-                        />
-                        <div>
-                          <p className="font-medium">{item.title}</p>
-                          {item.variantLabel && (
-                            <p className="text-sm text-base-content/60">
-                              {item.variantLabel}
-                            </p>
-                          )}
-                          <p className="text-sm text-base-content/60">
-                            x{item.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
+        <form className="modal-backdrop" method="dialog">
+          <button onClick={closeModal} type="submit">
+            cerrar
+          </button>
+        </form>
+      </dialog>
     </section>
   );
 };

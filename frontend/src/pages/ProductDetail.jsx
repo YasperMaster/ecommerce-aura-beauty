@@ -258,18 +258,26 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          <button
-            className="btn btn-primary btn-lg mt-6 w-full sm:w-fit"
-            disabled={availableStock <= 0}
-            onClick={handleAddToCart}
-            type="button"
+          <div
+            className={`mt-6 w-full sm:w-fit ${
+              availableStock > 0 && !(hasVariants && !selectedOption)
+                ? "aura-glow-wrap text-primary"
+                : ""
+            }`}
           >
-            {hasVariants && !selectedOption
-              ? "Elegí una opción"
-              : availableStock <= 0
-                ? "Sin stock"
-                : "Agregar al carrito"}
-          </button>
+            <button
+              className="btn btn-primary btn-lg w-full"
+              disabled={availableStock <= 0}
+              onClick={handleAddToCart}
+              type="button"
+            >
+              {hasVariants && !selectedOption
+                ? "Elegí una opción"
+                : availableStock <= 0
+                  ? "Sin stock"
+                  : "Agregar al carrito"}
+            </button>
+          </div>
 
           {reservedQuantity > 0 && (
             <p className="mt-2 text-xs text-base-content/60">

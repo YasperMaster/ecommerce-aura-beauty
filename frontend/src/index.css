@@ -42,6 +42,34 @@
         -webkit-appearance: none;
         margin: 0;
     }
+
+    .aura-glow-wrap {
+        @apply relative inline-block;
+        border-radius: var(--rounded-btn, 0.5rem);
+    }
+
+    .aura-glow-wrap::before,
+    .aura-glow-wrap::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        border-radius: inherit;
+        background-image: radial-gradient(closest-corner at center, currentColor 0%, transparent 85%);
+        pointer-events: none;
+    }
+
+    .aura-glow-wrap::before {
+        animation: auraGlowSubtle 7s ease-in-out infinite;
+    }
+
+    .aura-glow-wrap::after {
+        animation: auraGlowSubtleAfter 7s ease-in-out infinite;
+    }
+
+    .aura-glow-wrap > * {
+        @apply relative z-[1];
+    }
 }
 
 @layer utilities {
@@ -105,6 +133,28 @@
         to {
             opacity: 1;
             transform: translate(-50%, 0);
+        }
+    }
+
+    @keyframes auraGlowSubtle {
+        0%, 100% {
+            opacity: 0.18;
+            filter: blur(0.3rem);
+        }
+        50% {
+            opacity: 0.4;
+            filter: blur(0.5rem);
+        }
+    }
+
+    @keyframes auraGlowSubtleAfter {
+        0%, 100% {
+            opacity: 0.08;
+            filter: blur(0.8rem);
+        }
+        50% {
+            opacity: 0.22;
+            filter: blur(1.2rem);
         }
     }
 
