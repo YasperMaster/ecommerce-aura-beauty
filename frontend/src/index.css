@@ -138,23 +138,23 @@
 
     @keyframes auraGlowSubtle {
         0%, 100% {
-            opacity: 0.28;
-            filter: blur(0.35rem);
+            opacity: 0.6;
+            filter: blur(0.4rem);
         }
         50% {
-            opacity: 0.55;
-            filter: blur(0.6rem);
+            opacity: 1;
+            filter: blur(0.8rem);
         }
     }
 
     @keyframes auraGlowSubtleAfter {
         0%, 100% {
-            opacity: 0.14;
-            filter: blur(0.9rem);
+            opacity: 0.4;
+            filter: blur(1.2rem);
         }
         50% {
-            opacity: 0.32;
-            filter: blur(1.4rem);
+            opacity: 0.8;
+            filter: blur(2rem);
         }
     }
 
